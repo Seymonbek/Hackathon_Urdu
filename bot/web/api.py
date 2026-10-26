@@ -25,10 +25,10 @@ from bot.services.matching import calculate_match_score, is_night_job
 from bot.services.smart_notifier import notify_matching_students_about_job
 from bot.panels.tutor.dashboard import notify_students, get_or_create_tutor_record
 
-logger = logging.getLogger("kasbdosh_api")
+logger = logging.getLogger("imkon_api")
 
 app = FastAPI(
-    title="Kasbdosh Web API",
+    title="Imkon Web API",
     description="Urganch Davlat Universiteti (UrDU) talabalari bandligi, amaliyoti va kontrakt grantlari platformasi",
     version="1.0.0",
 )
@@ -658,5 +658,5 @@ async def export_csv():
     return StreamingResponse(
         io.BytesIO(csv_data),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=kasbdosh_urdu_hisobot.csv"}
+        headers={"Content-Disposition": "attachment; filename=imkon_urdu_hisobot.csv"}
     )

@@ -1,4 +1,4 @@
-# Kasbdosh — Universal Talaba Ish va Davlat Amaliyoti Birjasi
+# Imkon — Universal Talaba Ish va Davlat Amaliyoti Birjasi
 ## Yagona Bosh Hujjat (Master Specification)
 
 > **Loyiha maqsadi:** O'zbekiston OTM talabalari uchun barcha yo'nalishlardagi **tijoriy part-time ishlar** (Ta'lim, Savdo, Media/SMM, Ofis, HoReCa, IT, Gigs), **davlat organlarida rasmiy malakaviy amaliyot/stajirovkalar** (Sudlar, Tibbiyot/Shifoxonalar, Adliya, Hokimlik, Soliq, Maktablar) hamda **davlat va korxonalar tomonidan iqtidorli talabalarning to'lov-kontraktini to'lab berish dasturi (Tuition Sponsorship & Contract Grant)**ni o'z ichiga olgan, **"Oltin Uchburchak" (Soha + Masofa + Vaqt)** asosida ishlovchi universal Telegram bot platformasi.
@@ -52,7 +52,7 @@ graph TD
 ### 1.2. Loyihaning Papkalar Strukturasi (Clean Architecture)
 
 ```
-kasbdosh/
+imkon/
 ├── .env.example                     # BOT_TOKEN, DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, AWS_*
 ├── Dockerfile                       # Python 3.11-slim container
 ├── docker-compose.yml               # Bot + PostgreSQL (local development uchun)
@@ -334,14 +334,14 @@ CREATE TABLE settings (
 ### 2.1. Hukumat Qarori Asosida: "Kuchli Kadrlarga Kontrakt To'lab Berish" Mexanizmi
 
 O'zbekiston Respublikasi qonunchiligi (Soliq kodeksining 378-moddasi, Prezident va Hukumatning yoshlar bandligi hamda davlat organlariga iqtidorli yoshlarni jalb qilish bo'yicha qarorlari)ga asosan:
-* **Davlat organi yoki Korxona** o'ziga zarur bo'lgan kuchli va iqtidorli talabani (GPA $\ge 4.0$, "Kasbdosh" platformasida reytingi yuqori, amaliyotda o'zini ko'rsatgan) ishga olganda, uning **yillik to'lov-kontraktini to'liq yoki 50% gacha to'lab berish** huquqiga ega.
+* **Davlat organi yoki Korxona** o'ziga zarur bo'lgan kuchli va iqtidorli talabani (GPA $\ge 4.0$, "Imkon" platformasida reytingi yuqori, amaliyotda o'zini ko'rsatgan) ishga olganda, uning **yillik to'lov-kontraktini to'liq yoki 50% gacha to'lab berish** huquqiga ega.
 * **Soliq Imtiyozi:** Ish beruvchi tashkilot tomonidan talabaning kontraktiga o'tkazilgan mablag'lar foyda solig'idan chegiriladi va jismoniy shaxs daromad solig'idan ozod etiladi!
 * **Uch tomonlama kafolat (Talaba — Ish beruvchi — OTM):** Talaba o'qishini tamomlagach ushbu tashkilotda kelishilgan muddatda (masalan 1–2 yil) ishlab beradi, tashkilot esa kontraktni to'g'ridan-to'g'ri OTM hisob raqamiga o'tkazib beradi.
 
 ```
 ┌─────────────────┐       1. Iqtidorli nomzodni tanlash       ┌──────────────────────┐
 │  Davlat Organi  │──────────────────────────────────────────▶│   Iqtidorli Talaba   │
-│   yoki Korxona  │◀──────────────────────────────────────────│ (GPA 4.5+, Kasbdosh) │
+│   yoki Korxona  │◀──────────────────────────────────────────│ (GPA 4.5+, Imkon)    │
 └────────┬────────┘       2. Ishlashga rozilik bildirish       └──────────┬───────────┘
          │                                                                │
          │ 3. Yillik kontraktni to'lab berish                             │

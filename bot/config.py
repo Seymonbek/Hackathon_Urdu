@@ -7,26 +7,26 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     BOT_TOKEN: str = Field(default="DUMMY_BOT_TOKEN_REPLACE_ME")
-    BOT_NAME: str = Field(default="Kasbdosh")
+    BOT_NAME: str = Field(default="Imkon")
     ADMIN_IDS: List[int] = Field(default_factory=lambda: [123456789])
 
     # Database
     DB_HOST: str = Field(default="localhost")
     DB_PORT: int = Field(default=5432)
-    DB_NAME: str = Field(default="kasbdosh_db")
+    DB_NAME: str = Field(default="imkon_db")
     DB_USER: str = Field(default="postgres")
     DB_PASSWORD: str = Field(default="postgres_secret_password")
     DATABASE_URL: Optional[str] = None
     
     # SQLite fallback (agar PostgreSQL ulanmasa yoki mahalliy test uchun)
     USE_SQLITE_FALLBACK: bool = Field(default=True)
-    SQLITE_PATH: str = Field(default="kasbdosh.db")
+    SQLITE_PATH: str = Field(default="imkon.db")
 
     # AWS
     AWS_ACCESS_KEY_ID: Optional[str] = None
     AWS_SECRET_ACCESS_KEY: Optional[str] = None
     AWS_REGION: str = Field(default="eu-central-1")
-    AWS_S3_BUCKET: str = Field(default="kasbdosh-storage")
+    AWS_S3_BUCKET: str = Field(default="imkon-storage")
 
     # Business Rules
     DEFAULT_LANGUAGE: str = "uz"

@@ -3,10 +3,10 @@ version: '3.8'
 services:
   db:
     image: postgres:16-alpine
-    container_name: kasbdosh_postgres
+    container_name: imkon_postgres
     restart: always
     environment:
-      POSTGRES_DB: ${DB_NAME:-kasbdosh_db}
+      POSTGRES_DB: ${DB_NAME:-imkon_db}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres_secret_password}
     ports:
@@ -14,14 +14,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-kasbdosh_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-imkon_db}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   bot:
     build: .
-    container_name: kasbdosh_bot
+    container_name: imkon_bot
     restart: always
     depends_on:
       db:

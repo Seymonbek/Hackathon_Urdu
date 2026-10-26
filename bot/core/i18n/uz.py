@@ -60,7 +60,7 @@ BTN_SETTINGS_LANG = "🌐 Tilni o'zgartirish"
 
 # XABARLAR
 MSG_WELCOME = (
-    "Assalomu alaykum! **Kasbdosh — Universal Talaba Ish va Davlat Amaliyoti Birjasi**ga xush kelibsiz! 🎓💼\n\n"
+    "Assalomu alaykum! **Imkon — Universal Talaba Ish va Davlat Amaliyoti Birjasi**ga xush kelibsiz! 🎓💼\n\n"
     "Platforma orqali:\n"
     "• O'qishingizga xalaqit bermaydigan qulay ishlarni topish;\n"
     "• Davlat organlarida (Sudlar, Shifoxonalar, Adliya) rasmiy amaliyot o'tash;\n"

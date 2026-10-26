@@ -347,7 +347,7 @@ async def show_smart_resume(call: CallbackQuery):
     gpa_val = student.get("gpa_score") or 0.0
 
     resume_text = (
-        f"📄 **KASBDOSH — TALABA SMART REZYUMESI**\n"
+        f"📄 **IMKON — TALABA SMART REZYUMESI**\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"👤 **F.I.Sh:** {student.get('full_name')}\n"
         f"📱 **Telefon:** `{student.get('phone_number') or 'Kiritilmagan'}`\n"
@@ -358,7 +358,7 @@ async def show_smart_resume(call: CallbackQuery):
         f"📜 **Amaliyot soatlari:** **{internship_hours} soat** tasdiqlangan\n"
         f"💼 **Faoliyat holati:** {job_display}\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🛡 *Kasbdosh platformasida verifikatsiyadan o'tgan rasmiy talaba profili.*"
+        f"🛡 *Imkon platformasida verifikatsiyadan o'tgan rasmiy talaba profili.*"
     )
 
     kb = InlineKeyboardMarkup(

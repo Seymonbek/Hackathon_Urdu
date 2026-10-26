@@ -34,7 +34,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler(sys.stdout)],
 )
-logger = logging.getLogger("kasbdosh_bot")
+logger = logging.getLogger("imkon_bot")
 
 root_router = Router()
 
@@ -47,9 +47,9 @@ async def handle_start(msg: Message):
     # 1. Yangi foydalanuvchi bo'lsa yoki tili tanlanmagan bo'lsa — avval tilni so'raymiz
     if not user or not user.get("lang"):
         welcome_multilang = (
-            "Assalomu alaykum! **Kasbdosh / Imkon** tizimiga xush kelibsiz!\n"
-            "Добро пожаловать в систему **Kasbdosh / Imkon**!\n"
-            "Welcome to **Kasbdosh / Imkon** platform!\n\n"
+            "Assalomu alaykum! **Imkon** tizimiga xush kelibsiz!\n"
+            "Добро пожаловать в систему **Imkon**!\n"
+            "Welcome to **Imkon** platform!\n\n"
             "Iltimos, tilni tanlang / Пожалуйста, выберите язык / Please select your language:"
         )
         await msg.answer(welcome_multilang, reply_markup=get_language_choice_keyboard(), parse_mode="Markdown")
@@ -237,7 +237,7 @@ async def process_role_switch(call: CallbackQuery):
 
 
 async def main():
-    logger.info("Kasbdosh tizimi ishga tushirilmoqda (Bot + Veb Platforma)...")
+    logger.info("Imkon tizimi ishga tushirilmoqda (Bot + Veb Platforma)...")
 
     # 1. Ma'lumotlar bazasiga ulanish
     await db.connect()

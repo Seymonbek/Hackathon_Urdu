@@ -56,21 +56,21 @@ async def export_data_to_csv(msg: Message):
         ])
 
     csv_data = output.getvalue().encode("utf-8-sig")
-    document = BufferedInputFile(csv_data, filename="kasbdosh_hisobot_hakamlarga.csv")
+    document = BufferedInputFile(csv_data, filename="imkon_hisobot_hakamlarga.csv")
 
     caption = (
-        "📤 **Kasbdosh — To'liq Baza Eksporti (CSV)**\n\n"
+        "📤 **Imkon — To'liq Baza Eksporti (CSV)**\n\n"
         "Ushbu faylda barcha talabalar, davlat amaliyotlari, korxonalar va bandlik natijalari to'liq jamlangan. "
         "Excel dasturida to'g'ridan-to'g'ri ochiladi."
     )
     if lang == "ru":
         caption = (
-            "📤 **Kasbdosh — Полный экспорт базы (CSV)**\n\n"
+            "📤 **Imkon — Полный экспорт базы (CSV)**\n\n"
             "Файл содержит полные данные по студентам, гос. практике, организациям и результатам занятости."
         )
     elif lang == "en":
         caption = (
-            "📤 **Kasbdosh — Complete Database Export (CSV)**\n\n"
+            "📤 **Imkon — Complete Database Export (CSV)**\n\n"
             "Contains comprehensive data on students, state internships, organizations, and employment metrics."
         )
 

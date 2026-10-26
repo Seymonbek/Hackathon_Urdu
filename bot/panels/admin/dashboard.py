@@ -25,7 +25,7 @@ async def show_admin_dashboard(msg: Message):
 
     if lang == "ru":
         text = (
-            f"📊 **KASBDOSH — Дашборд управления (В реальном времени)**\n\n"
+            f"📊 **IMKON — Дашборд управления (В реальном времени)**\n\n"
             f"👥 **Аудитория:**\n"
             f"• Зарегистрировано студентов: **{total_students}**\n"
             f"• Организаций и компаний: **{total_employers}** (Верифицировано: {verified_employers})\n\n"
@@ -40,7 +40,7 @@ async def show_admin_dashboard(msg: Message):
         )
     elif lang == "en":
         text = (
-            f"📊 **KASBDOSH — Live Executive Dashboard**\n\n"
+            f"📊 **IMKON — Live Executive Dashboard**\n\n"
             f"👥 **User Base:**\n"
             f"• Registered Students: **{total_students}**\n"
             f"• Registered Organizations: **{total_employers}** (Verified: {verified_employers})\n\n"
@@ -55,7 +55,7 @@ async def show_admin_dashboard(msg: Message):
         )
     else:
         text = (
-            f"📊 **KASBDOSH — Boshqaruv Dashboardi (Real-Vaqt)**\n\n"
+            f"📊 **IMKON — Boshqaruv Dashboardi (Real-Vaqt)**\n\n"
             f"👥 **Auditoriya:**\n"
             f"• Ro'yxatdan o'tgan talabalar: **{total_students} ta**\n"
             f"• Tashkilot va korxonalar: **{total_employers} ta** (Tasdiqlangan: {verified_employers})\n\n"

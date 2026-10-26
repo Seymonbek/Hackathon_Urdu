@@ -60,7 +60,7 @@ BTN_SETTINGS_LANG = "🌐 Change Language"
 
 # MESSAGES
 MSG_WELCOME = (
-    "Hello! Welcome to **Kasbdosh — Universal Student Job and State Internship Exchange**! 🎓💼\n\n"
+    "Hello! Welcome to **Imkon — Universal Student Job and State Internship Exchange**! 🎓💼\n\n"
     "Through our platform you can:\n"
     "• Find flexible work matching your class schedule;\n"
     "• Undertake official internships in state agencies (Courts, Hospitals, Justice Dept);\n"

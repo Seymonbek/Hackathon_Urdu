@@ -1,4 +1,4 @@
-# 🌟 KASBDOSH / IMKON — Talabalar Bandligi va Davlat Amaliyoti Platformasi
+# 🌟 IMKON — Talabalar Bandligi va Davlat Amaliyoti Platformasi
 
 > **Intelektual Hakaton** uchun yaratilgan talabalar bandligi, rasmiy davlat amaliyotlari va OTM tyutorlik monitoring tizimi.
 
@@ -8,7 +8,7 @@ Telegram Bot: **[@imkon_ish_bot](https://t.me/imkon_ish_bot)**
 
 ## 📌 Loyiha Haqida
 
-**Kasbdosh (Imkon)** — talabalarga darsdan bo'sh vaqtlarida o'z mutaxassisliklariga mos sohalarda xavfsiz va kafolatlangan ish hamda davlat organlarida rasmiy amaliyot (stajirovka) topishga yordam beruvchi innovatsion ekotizim.
+**Imkon** — talabalarga darsdan bo'sh vaqtlarida o'z mutaxassisliklariga mos sohalarda xavfsiz va kafolatlangan ish hamda davlat organlarida rasmiy amaliyot (stajirovka) topishga yordam beruvchi innovatsion ekotizim.
 
 OTM tyutorlari, dekanat va ish beruvchilar uchun yagona avtomatlashtirilgan monitoring va nazorat tizimini taqdim etadi.
 
@@ -84,7 +84,7 @@ BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN
 BOT_NAME=imkon_ish_bot
 ADMIN_IDS=6956456422
 USE_SQLITE_FALLBACK=True
-SQLITE_PATH=kasbdosh.db
+SQLITE_PATH=imkon.db
 DEFAULT_LANGUAGE=uz
 ```
 
