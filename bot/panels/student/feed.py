@@ -1,10 +1,21 @@
 import os
+import html
 import logging
+from typing import List, Dict, Any, Tuple
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
+from aiogram.types import (
+    Message,
+    CallbackQuery,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    FSInputFile,
+    InputMediaPhoto,
+)
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from bot.core.callbacks import StudentJobAction
+
+from bot.core.callbacks import StudentJobAction, JobCarouselCallback
+from bot.config import settings
 from bot.core.i18n import get_i18n, get_button_variants
 from bot.db.connection import db
 from bot.db.repositories.users_repo import UsersRepo
@@ -23,7 +34,22 @@ class JobSearchStates(StatesGroup):
     search_query = State()
 
 
-def get_filter_keyboard(active: str = "all", lang: str = "uz") -> InlineKeyboardMarkup:
+def deduplicate_jobs(jobs_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Nom, korxona va ish vaqti bo'yicha dublikat vakansiyalarni tozalaydi."""
+    seen = set()
+    unique = []
+    for j in jobs_list:
+        title = str(j.get("title", "")).strip().lower()
+        comp = str(j.get("company_name", "")).strip().lower()
+        start = str(j.get("start_time", "")).strip()
+        key = (title, comp, start)
+        if key not in seen:
+            seen.add(key)
+            unique.append(j)
+    return unique
+
+
+def get_filter_keyboard(active: str = "all", lang: str = "uz", back_page: int = 0, back_job_id: int = 0) -> InlineKeyboardMarkup:
     """Mos ishlar va amaliyotlar bo'limidagi tezkor filtrlar klaviaturasi."""
     if lang == "ru":
         btn_jobs = f"{'🔘' if active == 'jobs' else '⚪'} 💼 Вакансии"
@@ -31,60 +57,90 @@ def get_filter_keyboard(active: str = "all", lang: str = "uz") -> InlineKeyboard
         btn_grants = f"{'🔘' if active == 'grants' else '⚪'} 🎓 Гранты"
         btn_all = f"{'🔘' if active == 'all' else '⚪'} 📋 Все"
         btn_search = "🔍 Поиск по ключевым словам"
+        btn_back = "⬅️ Назад к вакансии"
+        btn_menu = "🔙 Главное меню"
     elif lang == "en":
         btn_jobs = f"{'🔘' if active == 'jobs' else '⚪'} 💼 Paid Jobs"
         btn_intern = f"{'🔘' if active in ['internships', 'state'] else '⚪'} 🏛 Internships"
         btn_grants = f"{'🔘' if active == 'grants' else '⚪'} 🎓 Grants"
         btn_all = f"{'🔘' if active == 'all' else '⚪'} 📋 All"
         btn_search = "🔍 Search by keyword"
+        btn_back = "⬅️ Back to job"
+        btn_menu = "🔙 Main Menu"
     else:
         btn_jobs = f"{'🔘' if active == 'jobs' else '⚪'} 💼 Pullik ishlar"
         btn_intern = f"{'🔘' if active in ['internships', 'state'] else '⚪'} 🏛 Amaliyotlar"
         btn_grants = f"{'🔘' if active == 'grants' else '⚪'} 🎓 Kontrakt granti"
         btn_all = f"{'🔘' if active == 'all' else '⚪'} 📋 Barchasi"
         btn_search = "🔍 Kalit so'z bilan qidirish"
+        btn_back = "⬅️ Orqaga (Vakansiyaga)"
+        btn_menu = "🔙 Asosiy menyu"
 
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text=btn_jobs, callback_data="filter_jobs_jobs"),
-                InlineKeyboardButton(text=btn_intern, callback_data="filter_jobs_internships"),
-            ],
-            [
-                InlineKeyboardButton(text=btn_grants, callback_data="filter_jobs_grants"),
-                InlineKeyboardButton(text=btn_all, callback_data="filter_jobs_all"),
-            ],
-            [
-                InlineKeyboardButton(text=btn_search, callback_data="filter_jobs_search"),
-            ]
+    rows = [
+        [
+            InlineKeyboardButton(text=btn_jobs, callback_data="filter_jobs_jobs"),
+            InlineKeyboardButton(text=btn_intern, callback_data="filter_jobs_internships"),
+        ],
+        [
+            InlineKeyboardButton(text=btn_grants, callback_data="filter_jobs_grants"),
+            InlineKeyboardButton(text=btn_all, callback_data="filter_jobs_all"),
+        ],
+        [
+            InlineKeyboardButton(text=btn_search, callback_data="filter_jobs_search"),
         ]
-    )
+    ]
+
+    if back_job_id > 0:
+        rows.append([
+            InlineKeyboardButton(
+                text=btn_back,
+                callback_data=JobCarouselCallback(section=active, page=back_page, action="nav", job_id=back_job_id).pack()
+            ),
+            InlineKeyboardButton(text=btn_menu, callback_data="close_carousel")
+        ])
+    else:
+        rows.append([
+            InlineKeyboardButton(text=btn_menu, callback_data="close_carousel")
+        ])
+
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-# 1. PULLIK BO'SH ISH O'RINLARI (ALOHIDA TUGMA)
+# ============================================================================
+# 1. BOT ASOSIY MENYU TUGMALARI
+# ============================================================================
+
 @router.message(F.text.in_(get_button_variants("BTN_STUDENT_JOBS")))
 async def show_student_paid_jobs(msg: Message):
-    await show_filtered_matches(msg, filter_type="jobs")
+    """1. PULLIK BO'SH ISH O'RINLARI (ALOHIDA TUGMA)"""
+    await show_filtered_carousel(msg, section="jobs", page=0, is_edit=False)
 
 
-# 2. DAVLAT VA KASBIY AMALIYOTLAR / STAJIROVKA (ALOHIDA TUGMA)
 @router.message(F.text.in_(get_button_variants("BTN_STUDENT_INTERNSHIPS")))
 async def show_student_internships(msg: Message):
-    await show_filtered_matches(msg, filter_type="internships")
+    """2. DAVLAT VA KASBIY AMALIYOTLAR (ALOHIDA TUGMA)"""
+    await show_filtered_carousel(msg, section="internships", page=0, is_edit=False)
 
 
-# 3. BARCHA MOS TAKLIFLAR
 @router.message(F.text.in_(get_button_variants("BTN_STUDENT_MATCHES")))
 async def show_student_matches(msg: Message):
-    await show_filtered_matches(msg, filter_type="all")
+    """3. BARCHA MOS TAKLIFLAR"""
+    await show_filtered_carousel(msg, section="all", page=0, is_edit=False)
+
+
+@router.message(F.text.in_(get_button_variants("BTN_STUDENT_GRANTS")))
+async def show_tuition_grants(msg: Message):
+    """4. KONTRAKT GRANTLARI BO'LIMI"""
+    await show_filtered_carousel(msg, section="grants", page=0, is_edit=False)
 
 
 @router.callback_query(F.data.startswith("filter_jobs_"))
 async def process_filter_jobs(call: CallbackQuery, state: FSMContext):
-    await call.answer()
+    """Filtr chiplari bosilganda"""
     filter_type = call.data.replace("filter_jobs_", "")
     
     if filter_type == "search":
+        await call.answer()
         await state.set_state(JobSearchStates.search_query)
         lang = await UsersRepo.get_user_lang(call.from_user.id)
         if lang == "ru":
@@ -96,58 +152,35 @@ async def process_filter_jobs(call: CallbackQuery, state: FSMContext):
         await call.message.answer(prompt, parse_mode="Markdown")
         return
 
-    msg = call.message
-    await show_filtered_matches(msg, filter_type=filter_type, user_id=call.from_user.id)
+    await call.answer("Yangilanmoqda...")
+    await show_filtered_carousel(call, section=filter_type, page=0, is_edit=True)
 
 
 @router.message(JobSearchStates.search_query, F.text)
 async def process_search_query(msg: Message, state: FSMContext):
+    """Kalit so'z bo'yicha qidiruv"""
     await state.clear()
     query = msg.text.strip().lower()
-    lang = await UsersRepo.get_user_lang(msg.from_user.id)
-    student = await StudentsRepo.get_by_tg_id(msg.from_user.id)
+    await show_filtered_carousel(msg, section="search", page=0, is_edit=False, search_query=query)
+
+
+# ============================================================================
+# 2. FILTRLANGAN VAKANSIYALARNI YIG'ISH VA CAROUSELGA UZATISH
+# ============================================================================
+
+async def get_filtered_matched_jobs(
+    user_id: int, section: str, search_query: str = ""
+) -> Tuple[List[Tuple[Dict[str, Any], float, List[str]]], bool, str]:
+    """
+    Talaba uchun tozalangan va 'Oltin Uchburchak' bo'yicha saralangan ishlarni qaytaradi.
+    Qaytaradi: (matched_jobs, is_near_match, error_or_lock_message)
+    """
+    lang = await UsersRepo.get_user_lang(user_id)
+    student = await StudentsRepo.get_by_tg_id(user_id)
     if not student:
-        t = get_i18n(lang)
-        await msg.answer(t.MSG_PLEASE_REGISTER)
-        return
+        return [], False, "register_required"
 
-    all_jobs = await JobsRepo.get_open_jobs()
-    results = []
-    for j in all_jobs:
-        searchable = (
-            str(j.get("title", "")) + " " +
-            str(j.get("company_name", "")) + " " +
-            str(j.get("category", "")) + " " +
-            " ".join(j.get("target_majors") or []) + " " +
-            " ".join(j.get("duties") or [])
-        ).lower()
-        if query in searchable:
-            is_eligible, score, reasons = calculate_match_score(student, j)
-            results.append((j, score, reasons))
-
-    if not results:
-        no_res = f"🔍 *'{msg.text}'* bo'yicha hech qanday vakansiya topilmadi." if lang == "uz" else (f"🔍 По запросу *'{msg.text}'* ничего не найдено." if lang == "ru" else f"🔍 No jobs found matching *'{msg.text}'*.")
-        await msg.answer(no_res, reply_markup=get_filter_keyboard("all", lang), parse_mode="Markdown")
-        return
-
-    results.sort(key=lambda x: x[1], reverse=True)
-    header = f"🔍 *'{msg.text}'* so'rovi bo'yicha topilgan natijalar ({len(results)} ta):" if lang == "uz" else (f"🔍 Результаты по запросу *'{msg.text}'* ({len(results)}):" if lang == "ru" else f"🔍 Search results for *'{msg.text}'* ({len(results)}):")
-    await msg.answer(header, parse_mode="Markdown")
-    for job, score, reasons in results[:5]:
-        await render_job_card(msg, job, score, reasons, lang, is_near_match=False)
-
-
-async def show_filtered_matches(msg: Message, filter_type: str = "all", user_id: int = None):
-    uid = user_id or msg.chat.id
-    lang = await UsersRepo.get_user_lang(uid)
-    t = get_i18n(lang)
-
-    student = await StudentsRepo.get_by_tg_id(uid)
-    if not student:
-        await msg.answer(t.MSG_PLEASE_REGISTER)
-        return
-
-    # Sessiya / Imtihon qulfi tekshiruvi (Tyutor tomonidan o'rnatilgan cheklov)
+    # Sessiya qulfi tekshiruvi
     from datetime import date
     today = date.today()
     exam_from = student.get("exam_from")
@@ -157,346 +190,496 @@ async def show_filtered_matches(msg: Message, filter_type: str = "all", user_id:
             ef = date.fromisoformat(str(exam_from)) if isinstance(exam_from, str) else exam_from
             et = date.fromisoformat(str(exam_to)) if isinstance(exam_to, str) else exam_to
             if ef <= today <= et:
-                if lang == "ru":
-                    lock_msg = (
-                        f"🔒 **Режим сессии и экзаменов активен ({exam_from} – {exam_to})!**\n\n"
-                        f"Ваш университетский **Тьютор** установил период сессии.\n"
-                        f"В соответствии с правилами OTM, в этот период поиск работы и подача заявок приостановлены (режим строгой паузы), чтобы вы могли успешно сдать экзамены.\n\n"
-                        f"Как только сессия завершится или тьютор снимет ограничение, вакансии снова станут доступны!"
-                    )
-                elif lang == "en":
-                    lock_msg = (
-                        f"🔒 **Exam Lock Active ({exam_from} – {exam_to})!**\n\n"
-                        f"Your university **Tutor** has placed your account under active exam mode.\n"
-                        f"Job search and applications are currently locked so you can focus on your academic examinations.\n\n"
-                        f"Access will automatically resume when the exam period concludes."
-                    )
-                else:
-                    lock_msg = (
-                        f"🔒 **Sessiya va Imtihon qulfi faol ({exam_from} – {exam_to})!**\n\n"
-                        f"Sizning OTM mas'ul **Tyutoringiz** tomonidan sessiya davri belgilangan.\n"
-                        f"OTM qoidalariga muvofiq, imtihonlar davrida talabalarning akademik o'zlashtirishini ta'minlash uchun ish qidirish va yangi ishlarga ariza topshirish to'xtatilgan (qat'iy qulf/pauza rejimi).\n\n"
-                        f"Sessiya tugashi bilan yoki tyutoringiz qulfni ochganda barcha mos vakansiyalar qayta ochiladi!"
-                    )
-                await msg.answer(lock_msg, parse_mode="Markdown")
-                return
-        except Exception as e:
-            logger.warning(f"Exam lock check error in show_filtered_matches: {e}")
+                lock_msg = (
+                    f"🔒 <b>Sessiya va Imtihon qulfi faol ({exam_from} – {exam_to})!</b>\n\n"
+                    f"Sizning OTM mas'ul <b>Tyutoringiz</b> tomonidan sessiya qulfi o'rnatilgan.\n"
+                    f"Imtihonlar davrida talabalarning akademik o'zlashtirishini ta'minlash uchun ish qidirish va yangi ishlarga ariza topshirish vaqtincha to'xtatilgan.\n\n"
+                    f"Sessiya tugashi bilan yoki tyutoringiz qulfni ochganda barcha vakansiyalar qayta ochiladi!"
+                )
+                return [], False, lock_msg
+        except Exception:
+            pass
 
-    all_jobs = await JobsRepo.get_open_jobs()
-    matched_jobs = []
+    # Bazadan barcha ochiq ishlarni olamiz va dublikatlarni tozalaymiz
+    raw_jobs = await JobsRepo.get_open_jobs()
+    all_jobs = deduplicate_jobs(raw_jobs)
+
     candidate_jobs = []
-
     for j in all_jobs:
-        # Bo'limlar bo'yicha qat'iy ajratish (Ishlar va amaliyotlar aralashmasligi uchun)
-        if filter_type == "jobs" and j.get("listing_type") == "state_internship":
+        if section == "jobs" and j.get("listing_type") == "state_internship":
             continue
-        if filter_type in ["internships", "state"] and j.get("listing_type") != "state_internship":
+        if section in ["internships", "state"] and j.get("listing_type") != "state_internship":
             continue
-        if filter_type == "grants" and j.get("listing_type") != "tuition_grant_job":
+        if section == "grants" and (j.get("listing_type") != "tuition_grant_job" and j.get("tuition_coverage_percent", 0) <= 0):
             continue
-        if filter_type == "remote" and j.get("work_format") != "remote_task":
-            continue
+
+        if section == "search" and search_query:
+            searchable = (
+                str(j.get("title", "")) + " " +
+                str(j.get("company_name", "")) + " " +
+                str(j.get("category", "")) + " " +
+                " ".join(j.get("target_majors") or []) + " " +
+                " ".join(j.get("duties") or [])
+            ).lower()
+            if search_query not in searchable:
+                continue
 
         candidate_jobs.append(j)
+
+    matched_jobs = []
+    for j in candidate_jobs:
         is_eligible, score, reasons = calculate_match_score(student, j)
         if is_eligible:
             matched_jobs.append((j, score, reasons))
 
     matched_jobs.sort(key=lambda x: x[1], reverse=True)
 
-    # 1. To'liq mos ishlar topilmagan holat -> "Deyarli mos" ishlarni ko'rsatish
     if not matched_jobs:
         near_matches = find_near_matches(student, candidate_jobs)
-        
-        no_full_text = (
-            "🔔 **Ushbu bo'lim bo'yicha 100% to'liq mos taklif topilmadi.**\n"
-            "Lekin yo'nalishingiz va shartlari qisman to'g'ri keladigan **'Deyarli mos'** takliflar mavjud 👇"
-        )
-        if lang == "ru":
-            no_full_text = (
-                "🔔 **По данному разделу нет предложений со 100% совпадением.**\n"
-                "Но мы подобрали предложения с частичным совпадением (**'Почти подходящие'**) 👇"
-            )
-        elif lang == "en":
-            no_full_text = (
-                "🔔 **No 100% matching offers for this section.**\n"
-                "Here are partially matching recommendations (**'Near-matches'**) for you 👇"
-            )
+        return near_matches, True, ""
 
-        btn_notify = "🔔 Mos ish chiqsa xabar bering" if lang == "uz" else ("🔔 Уведомить о новых вакансиях" if lang == "ru" else "🔔 Notify me when new job opens")
-        notify_kb = InlineKeyboardMarkup(
-            inline_keyboard=[[InlineKeyboardButton(text=btn_notify, callback_data="notify_me_subscription")]]
-        )
-        await msg.answer(no_full_text, reply_markup=notify_kb, parse_mode="Markdown")
+    return matched_jobs, False, ""
 
-        # Deyarli mos ishlarni chiqarish
-        for job, score, reasons in near_matches[:4]:
-            await render_job_card(msg, job, score, reasons, lang, is_near_match=True)
+
+# ============================================================================
+# 3. YAGONA CAROUSEL KO'RINISHI (PAGINATSIYA VA SHU JOYDA EDIT BO'LISHI)
+# ============================================================================
+
+async def show_filtered_carousel(
+    event,
+    section: str = "all",
+    page: int = 0,
+    is_edit: bool = False,
+    search_query: str = "",
+):
+    """
+    Vakansiyalarni bitta xabarda paginatsiya bilan (Carousel) ko'rsatadi.
+    Tugmalar bosilganda xabar yangilanadi (edit), yangi xabar tashlanmaydi!
+    """
+    is_callback = isinstance(event, CallbackQuery)
+    user_id = event.from_user.id
+    msg = event.message if is_callback else event
+    lang = await UsersRepo.get_user_lang(user_id)
+    t = get_i18n(lang)
+
+    matched_jobs, is_near, lock_or_err = await get_filtered_matched_jobs(user_id, section, search_query)
+
+    if lock_or_err == "register_required":
+        await (msg.edit_text if is_edit else msg.answer)(t.MSG_PLEASE_REGISTER, parse_mode="HTML")
         return
 
-    # 2. To'liq mos ishlarni ko'rsatish
-    if lang == "ru":
-        filter_names = {
-            "all": "Все предложения",
-            "jobs": "Подходящие вакансии (Оплачиваемая работа)",
-            "internships": "Государственная & Проф. практика (Стажировки)",
-            "state": "Государственная практика",
-            "grants": "Гранты на контракт",
-            "remote": "Удалённая работа"
-        }
-    elif lang == "en":
-        filter_names = {
-            "all": "All Offers",
-            "jobs": "Available Paid Jobs",
-            "internships": "State & Career Internships (Traineeships)",
-            "state": "State Internships",
-            "grants": "Tuition Grants",
-            "remote": "Remote Tasks"
-        }
-    else:
-        filter_names = {
-            "all": "Barcha takliflar",
-            "jobs": "Bo'sh ish o'rinlari (Pullik ishlar)",
-            "internships": "Davlat & Kasbiy Amaliyotlar (Stajirovka)",
-            "state": "Davlat amaliyotlari",
-            "grants": "Kontrakt grantlari",
-            "remote": "Masofaviy ishlar"
-        }
+    if lock_or_err:
+        await (msg.edit_text if is_edit else msg.answer)(lock_or_err, parse_mode="HTML")
+        return
 
-    f_title = filter_names.get(filter_type, "Mos takliflar")
-    header = f"🎯 **{f_title} ({len(matched_jobs)} ta topildi):**\n"
+    if not matched_jobs:
+        empty_text = (
+            "🔍 <b>Ushbu toifa bo'yicha hozircha vakansiyalar topilmadi.</b>\n"
+            "Boshqa toifani tanlab ko'ring yoki bildirishnomalarni yoqing:"
+        )
+        kb = get_filter_keyboard(section, lang)
+        if is_edit and is_callback:
+            try:
+                await msg.edit_text(empty_text, reply_markup=kb, parse_mode="HTML")
+            except Exception:
+                await msg.answer(empty_text, reply_markup=kb, parse_mode="HTML")
+        else:
+            await msg.answer(empty_text, reply_markup=kb, parse_mode="HTML")
+        return
 
-    await msg.answer(header, reply_markup=get_filter_keyboard(filter_type, lang), parse_mode="Markdown")
+    total = len(matched_jobs)
+    page = max(0, min(page, total - 1))
+    job, score, reasons = matched_jobs[page]
 
-    for job, score, reasons in matched_jobs[:5]:
-        await render_job_card(msg, job, score, reasons, lang, is_near_match=False)
+    # Talabaning ushbu ishga arizasi borligini tekshirish
+    student = await StudentsRepo.get_by_tg_id(user_id)
+    already_applied = False
+    if student:
+        existing = await db.fetchval(
+            "SELECT id FROM applications WHERE job_id = $1 AND student_id = $2",
+            job["id"], student["id"]
+        )
+        already_applied = bool(existing)
 
-
-async def render_job_card(msg: Message, job: dict, score: float, reasons: list, lang: str, is_near_match: bool = False):
-    reasons_text = " • " + " • ".join(reasons)
-    pay_info = f"💰 {job.get('pay_amount', 0):,} so'm ({job.get('pay_timing')})"
-    if job.get("listing_type") == "tuition_grant_job":
-        pay_info = f"🎓 **Kontrakt: {job.get('tuition_coverage_percent', 100)}% to'lanadi!**"
+    # To'lov va imtiyoz ma'lumotlari
+    if job.get("listing_type") == "tuition_grant_job" or job.get("tuition_coverage_percent", 0) > 0:
+        pay_info = f"🎓 <b>100% Kontrakt to'lab beriladi!</b>"
     elif job.get("listing_type") == "state_internship":
-        pay_info = f"🏛 **Davlat amaliyoti / {job.get('pay_amount', 0):,} so'm**"
+        pay_amount = job.get("pay_amount", 0)
+        pay_info = f"🏛 <b>Rasmiy Davlat Amaliyoti</b> ({pay_amount:,} so'm)" if pay_amount > 0 else "🏛 <b>Rasmiy Davlat Amaliyoti (Tasdiq kundaligi)</b>"
+    else:
+        pay_info = f"💰 <b>{job.get('pay_amount', 0):,} so'm</b> ({job.get('pay_timing')})"
 
     # Tungi smena va TTJ ogohlantirishi
     night_warning = ""
     if is_night_job(job):
-        if lang == "ru":
-            night_warning = "\n⚠️ **Ночная смена:** *Если вы живёте в общежитии (ТТЖ), согласуйте ночную смену с администрацией ВУЗа (после 22:00 вход закрыт).*\n"
-        elif lang == "en":
-            night_warning = "\n⚠️ **Night Shift Notice:** *If staying in university dormitory, verify with admin as doors close at 22:00.*\n"
-        else:
-            night_warning = "\n⚠️ **Tungi smena ogohlantirishi:** *Agar TTJ (yotoqxona)da yashasangiz, 22:00 dan keyin eshiklar yopilishi sababli ushbu smenani OTM yoki komendant bilan kelishib oling!*\n"
+        night_warning = (
+            "\n⚠️ <b>Tungi smena ogohlantirishi:</b> "
+            "<i>Agar TTJ (yotoqxona)da yashasangiz, 22:00 dan keyin eshiklar yopilishi sababli ushbu smenani OTM ma'muriyati bilan kelishib oling!</i>\n"
+        )
 
-    tag = "⚡ [Deyarli mos] " if is_near_match else "🎯 "
-    if lang == "ru":
-        card_text = (
-            f"{tag}**{job.get('title')}** (Совпадение: {score}%)\n"
-            f"🏢 Организация: {job.get('company_name')}\n"
-            f"📍 Адрес: {job.get('address')}\n"
-            f"⏰ Время: {job.get('start_time', '')} – {job.get('end_time', '')}\n"
-            f"{pay_info}\n"
-            f"{night_warning}\n"
-            f"💡 **Причина:** {reasons_text}"
-        )
-        btn_apply = "✅ Подать заявку"
-        btn_details = "ℹ️ Подробнее"
-    elif lang == "en":
-        card_text = (
-            f"{tag}**{job.get('title')}** (Match: {score}%)\n"
-            f"🏢 Organization: {job.get('company_name')}\n"
-            f"📍 Address: {job.get('address')}\n"
-            f"⏰ Schedule: {job.get('start_time', '')} – {job.get('end_time', '')}\n"
-            f"{pay_info}\n"
-            f"{night_warning}\n"
-            f"💡 **Reasons:** {reasons_text}"
-        )
-        btn_apply = "✅ Apply"
-        btn_details = "ℹ️ Details"
-    else:
-        card_text = (
-            f"{tag}**{job.get('title')}** (Moslik: {score}%)\n"
-            f"🏢 Tashkilot: {job.get('company_name')}\n"
-            f"📍 Manzil: {job.get('address')}\n"
-            f"⏰ Vaqt: {job.get('start_time', '')} – {job.get('end_time', '')}\n"
-            f"{pay_info}\n"
-            f"{night_warning}\n"
-            f"💡 **Moslik sababi:** {reasons_text}"
-        )
-        btn_apply = "✅ Ariza berish"
-        btn_details = "ℹ️ Batafsil"
+    # Bo'lim nomi
+    section_titles = {
+        "jobs": "💼 Bo'sh ish o'rinlari (Pullik ishlar)",
+        "internships": "🏛 Davlat & Kasbiy Amaliyotlar",
+        "state": "🏛 Davlat Amaliyotlari",
+        "grants": "🎓 100% Kontrakt Grantlari",
+        "all": "🎯 Barcha Mos Takliflar",
+        "search": f"🔍 Qidiruv natijalari ('{html.escape(search_query)}')"
+    }
+    sec_title = section_titles.get(section, "Mos takliflar")
+    prefix = "⚡ <b>[Deyarli mos]</b> " if is_near else "🎯 "
 
-    kb = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=btn_apply,
-                    callback_data=StudentJobAction(action="apply", job_id=job["id"]).pack(),
-                ),
-                InlineKeyboardButton(
-                    text=btn_details,
-                    callback_data=StudentJobAction(action="view", job_id=job["id"]).pack(),
-                ),
-            ]
-        ]
+    reasons_text = "\n".join([f"  • {html.escape(str(r))}" for r in reasons[:3]])
+
+    card_text = (
+        f"{prefix}<b>{sec_title} ({page + 1}/{total}):</b>\n\n"
+        f"💼 <b>{html.escape(str(job.get('title')))}</b> (Moslik: <b>{score}%</b>)\n"
+        f"🏢 <b>Tashkilot:</b> {html.escape(str(job.get('company_name')))}\n"
+        f"📍 <b>Manzil:</b> {html.escape(str(job.get('address')))}\n"
+        f"⏰ <b>Vaqt:</b> {job.get('start_time', '')} – {job.get('end_time', '')}\n"
+        f"{pay_info}\n"
+        f"{night_warning}\n"
+        f"💡 <b>Nega sizga mos:</b>\n{reasons_text}\n"
     )
 
-    # Rasm bilan yuborish (IMKON logotipi yoki rasmiy e'lon rasmi)
+    # =========================================================================
+    # KLAVIATURA TUZISH:
+    # 1-qator: [⬅️ Oldingi]  [ 1 / 16 ]  [ Keyingi ➡️ ]
+    # 2-qator: [✅ Ariza berish / topshirilgan]  [ℹ️ Batafsil]
+    # 3-qator: [📋 Toifalar]  [🔍 Qidirish]
+    # =========================================================================
+    keyboard_buttons = []
+
+    # 1-qator: Paginatsiya
+    nav_row = []
+    if page > 0:
+        nav_row.append(
+            InlineKeyboardButton(
+                text="⬅️ Oldingi",
+                callback_data=JobCarouselCallback(section=section, page=page - 1, action="nav", job_id=job["id"]).pack()
+            )
+        )
+    nav_row.append(
+        InlineKeyboardButton(
+            text=f"📄 {page + 1} / {total}",
+            callback_data="noop_indicator"
+        )
+    )
+    if page < total - 1:
+        nav_row.append(
+            InlineKeyboardButton(
+                text="Keyingi ➡️",
+                callback_data=JobCarouselCallback(section=section, page=page + 1, action="nav", job_id=job["id"]).pack()
+            )
+        )
+    keyboard_buttons.append(nav_row)
+
+    # 2-qator: Ariza va Batafsil
+    if already_applied:
+        btn_apply = InlineKeyboardButton(text="✅ Ariza topshirilgan", callback_data="already_applied_info")
+    else:
+        btn_apply = InlineKeyboardButton(
+            text="✅ Ariza topshirish",
+            callback_data=JobCarouselCallback(section=section, page=page, action="apply", job_id=job["id"]).pack()
+        )
+    btn_details = InlineKeyboardButton(
+        text="ℹ️ Batafsil",
+        callback_data=JobCarouselCallback(section=section, page=page, action="view", job_id=job["id"]).pack()
+    )
+    keyboard_buttons.append([btn_apply, btn_details])
+
+    # 3-qator: Toifalar va Qidiruv
+    keyboard_buttons.append([
+        InlineKeyboardButton(
+            text="📋 Toifalar",
+            callback_data=JobCarouselCallback(section=section, page=page, action="menu", job_id=job["id"]).pack()
+        ),
+        InlineKeyboardButton(text="🔍 Qidirish", callback_data="filter_jobs_search"),
+    ])
+
+    # 4-qator: Asosiy menyuga qaytish
+    keyboard_buttons.append([
+        InlineKeyboardButton(text="🔙 Asosiy menyu", callback_data="close_carousel")
+    ])
+
+    kb = InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
+
+    # Rasm tayyorlash
     img_path = job.get("image_path") or DEFAULT_IMAGE_PATH
     if not os.path.exists(img_path):
         img_path = DEFAULT_IMAGE_PATH
 
-    try:
-        if os.path.exists(img_path):
-            photo = FSInputFile(img_path)
-            if len(card_text) <= 1024:
-                await msg.answer_photo(photo=photo, caption=card_text, reply_markup=kb, parse_mode="Markdown")
+    # Xabarni yangilash (EDIT) yoki yangi yuborish
+    is_photo_msg = bool(getattr(msg, "photo", None))
+    if is_photo_msg and len(card_text) > 1020:
+        card_text = card_text[:1015] + "..."
+
+    if is_edit and is_callback:
+        try:
+            if is_photo_msg:
+                await msg.edit_caption(caption=card_text, reply_markup=kb, parse_mode="HTML")
             else:
-                await msg.answer_photo(photo=photo)
-                await msg.answer(card_text, reply_markup=kb, parse_mode="Markdown")
-        else:
-            await msg.answer(card_text, reply_markup=kb, parse_mode="Markdown")
-    except Exception as e:
-        logger.warning(f"Rasm yuborishda xatolik: {e}, oddiy xabar yuboriladi.")
-        await msg.answer(card_text, reply_markup=kb, parse_mode="Markdown")
+                await msg.edit_text(text=card_text, reply_markup=kb, parse_mode="HTML")
+        except Exception as e:
+            logger.debug(f"Carousel edit fallback: {e}")
+            try:
+                if is_photo_msg:
+                    await msg.edit_media(
+                        media=InputMediaPhoto(media=FSInputFile(img_path), caption=card_text[:1020], parse_mode="HTML"),
+                        reply_markup=kb
+                    )
+            except Exception as e2:
+                logger.warning(f"Carousel edit xatosi: {e2}")
+    else:
+        # Yangi xabar yuborish — FAQAT BITTA XABAR YUBORILADI!
+        try:
+            if os.path.exists(img_path) and len(card_text) <= 1024:
+                photo = FSInputFile(img_path)
+                await msg.answer_photo(photo=photo, caption=card_text, reply_markup=kb, parse_mode="HTML")
+            else:
+                await msg.answer(card_text, reply_markup=kb, parse_mode="HTML")
+        except Exception as e:
+            logger.warning(f"Rasm yuborishda xatolik: {e}, oddiy xabar yuboriladi.")
+            await msg.answer(card_text, reply_markup=kb, parse_mode="HTML")
 
 
-# ==========================================
-# 3. BATAFSIL KO'RISH (VIEW JOB DETAILS)
-# ==========================================
-@router.callback_query(StudentJobAction.filter(F.action == "view"))
-async def process_view_job_details(call: CallbackQuery, callback_data: StudentJobAction):
+# ============================================================================
+# 4. CAROUSEL CALLBACKLARI (NAVIGATSIYA, VIEW, BACK, APPLY)
+# ============================================================================
+
+@router.callback_query(F.data == "noop_indicator")
+async def process_noop(call: CallbackQuery):
+    """Indikator bosilganda oddiy axborot"""
+    await call.answer("Vakansiyalar orasida navigatsiya qilish uchun ⬅️ va ➡️ tugmalaridan foydalaning.")
+
+
+@router.callback_query(F.data == "already_applied_info")
+async def process_already_applied_info(call: CallbackQuery):
+    await call.answer("Siz ushbu vakansiyaga allaqachon ariza topshirgansiz! 'Mening arizalarim' bo'limida holatni ko'rishingiz mumkin.", show_alert=True)
+
+
+@router.callback_query(JobCarouselCallback.filter(F.action == "nav"))
+async def process_carousel_navigation(call: CallbackQuery, callback_data: JobCarouselCallback):
+    """⬅️ Oldingi yoki Keyingi ➡️ bosilganda shu joyda o'zgaradi"""
+    await call.answer()
+    await show_filtered_carousel(call, section=callback_data.section, page=callback_data.page, is_edit=True)
+
+
+@router.callback_query(JobCarouselCallback.filter(F.action == "menu"))
+async def process_carousel_menu(call: CallbackQuery, callback_data: JobCarouselCallback):
+    """📋 Toifalar tugmasi bosilganda filtr menyusini chiqarish"""
     await call.answer()
     lang = await UsersRepo.get_user_lang(call.from_user.id)
-    job = await JobsRepo.get_by_id(callback_data.job_id)
-    if not job:
-        not_found = "Vakansiya topilmadi." if lang == "uz" else ("Вакансия не найдена." if lang == "ru" else "Job not found.")
-        await call.message.reply(not_found)
-        return
+    text = "🔘 <b>Qaysi yo'nalishdagi takliflarni ko'rmoqchisiz?</b>\nQuyidagi toifalardan birini tanlang:"
+    kb = get_filter_keyboard(callback_data.section, lang, back_page=callback_data.page, back_job_id=callback_data.job_id)
+    try:
+        await call.message.edit_caption(caption=text, reply_markup=kb, parse_mode="HTML")
+    except Exception:
+        try:
+            await call.message.edit_text(text=text, reply_markup=kb, parse_mode="HTML")
+        except Exception:
+            await call.message.answer(text, reply_markup=kb, parse_mode="HTML")
 
-    # Tashkilot turi
+
+@router.callback_query(F.data == "close_carousel")
+async def process_close_carousel(call: CallbackQuery):
+    """Karuselni yopish va asosiy menyuga qaytish"""
+    await call.answer("Asosiy menyu")
+    lang = await UsersRepo.get_user_lang(call.from_user.id)
+    from bot.core.keyboards import get_student_main_keyboard
+    kb = get_student_main_keyboard(lang)
+    try:
+        await call.message.delete()
+    except Exception:
+        try:
+            await call.message.edit_reply_markup(reply_markup=None)
+        except Exception:
+            pass
+    await call.message.answer(
+        "🏠 <b>Asosiy menyuga qaytdingiz.</b>\nQuyidagi tugmalar orqali kerakli bo'limni tanlang:",
+        reply_markup=kb,
+        parse_mode="HTML"
+    )
+
+
+# ============================================================================
+# 5. BATAFSIL KO'RISH (VIEW JOB DETAILS) — SHU JOYDA EDIT BO'LADI!
+# ============================================================================
+
+def format_job_details(job: Dict[str, Any], max_len: int = 1000) -> str:
+    """Telegram photo caption (1024 char) chegarasiga 100% mos ixcham va to'liq ma'lumot."""
     org_type_labels = {
-        "state_agency": "🏛 Davlat organi / Muassasasi",
-        "commercial": "🏢 Tijorat korxonasi / Kompaniya",
-        "ngo": "🌐 NNT / Xalqaro tashkilot"
+        "state_agency": "🏛 Davlat organi",
+        "commercial": "🏢 Tijorat korxonasi",
+        "ngo": "🌐 NNT / Xalqaro"
     }
     org_type_str = org_type_labels.get(job.get("org_type"), "🏢 Tashkilot")
 
-    # To'lov va imtiyoz
-    if job.get("listing_type") == "tuition_grant_job":
-        pay_str = f"🎓 **100% Yillik kontrakt to'lanadi!** (Majburiyat: {job.get('work_obligation_years', 1)} yil staj)"
+    if job.get("listing_type") == "tuition_grant_job" or job.get("tuition_coverage_percent", 0) > 0:
+        pay_str = f"🎓 <b>100% Kontrakt to'lanadi!</b> ({job.get('work_obligation_years', 1)} yil staj)"
     elif job.get("listing_type") == "state_internship":
-        pay_str = f"🏛 **Rasmiy davlat xizmati / amaliyoti** (Maosh: {job.get('pay_amount', 0):,} so'm)"
+        pay_amount = job.get("pay_amount", 0)
+        pay_str = f"🏛 <b>Davlat amaliyoti</b> ({pay_amount:,} so'm)" if pay_amount > 0 else "🏛 <b>Davlat amaliyoti (Tasdiq kundaligi)</b>"
     else:
-        pay_str = f"💰 **{job.get('pay_amount', 0):,} so'm** ({job.get('pay_unit')}, {job.get('pay_timing')})"
-
-    # Vazifalar va imtiyozlar ro'yxati
-    duties_list = job.get("duties") or []
-    duties_str = "\n".join([f"  • {d}" for d in duties_list]) if duties_list else "  • Ish beruvchi ko'rsatmasi bo'yicha"
-
-    perks_list = job.get("perks") or []
-    perks_str = "\n".join([f"  ✨ {p}" for p in perks_list]) if perks_list else "  ✨ Qonuniy mehnat sharoitlari"
+        pay_str = f"💰 <b>{job.get('pay_amount', 0):,} so'm</b> ({job.get('pay_timing')})"
 
     majors_list = job.get("target_majors") or []
-    majors_str = ", ".join(majors_list) if majors_list else "Barcha yo'nalishlar"
+    majors_str = ", ".join([html.escape(str(m)) for m in majors_list[:3]]) if majors_list else "Barcha yo'nalishlar"
+    if len(majors_list) > 3:
+        majors_str += "..."
 
-    # Xarita havolasi
+    phone_info = f"\n📞 <b>Aloqa:</b> <code>{html.escape(str(job.get('contact_phone')))}</code>" if job.get("contact_phone") else ""
+
+    header = (
+        f"📋 <b>{html.escape(str(job.get('title')))} — Batafsil:</b>\n\n"
+        f"🏢 <b>Tashkilot:</b> {html.escape(str(job.get('company_name')))} ({org_type_str})\n"
+        f"📍 <b>Manzil:</b> {html.escape(str(job.get('address')))}\n"
+        f"⏰ <b>Ish vaqti:</b> {job.get('start_time', '')} – {job.get('end_time', '')}\n"
+        f"💵 <b>To'lov:</b> {pay_str}\n"
+        f"🎓 <b>Yo'nalishlar:</b> {majors_str}\n"
+        f"📚 <b>Kurs:</b> {job.get('min_course_required', 1)}-kurs+{phone_info}\n"
+    )
+
+    duties_list = job.get("duties") or []
+    perks_list = job.get("perks") or []
+
+    duties_part = ""
+    if duties_list:
+        d_items = "\n".join([f"  • {html.escape(str(d))}" for d in duties_list[:3]])
+        duties_part = f"\n🛠 <b>Vazifalar:</b>\n{d_items}\n"
+
+    perks_part = ""
+    if perks_list:
+        p_items = "\n".join([f"  ✨ {html.escape(str(p))}" for p in perks_list[:3]])
+        perks_part = f"\n🎁 <b>Imtiyozlar:</b>\n{p_items}\n"
+
+    full_text = header + duties_part + perks_part
+
+    if len(full_text) > max_len:
+        excess = len(full_text) - max_len + 10
+        if len(perks_part) > excess:
+            perks_part = perks_part[:-excess] + "...\n"
+            full_text = header + duties_part + perks_part
+        elif len(duties_part) > excess:
+            duties_part = duties_part[:-excess] + "...\n"
+            full_text = header + duties_part
+        else:
+            full_text = full_text[:max_len - 5] + "..."
+
+    return full_text
+
+
+@router.callback_query(JobCarouselCallback.filter(F.action == "view"))
+@router.callback_query(StudentJobAction.filter(F.action == "view"))
+async def process_view_job_details(call: CallbackQuery, callback_data: Any):
+    """
+    Vakansiya tafsilotlarini o'sha xabarning o'zida tahrirlab (edit qilib) ko'rsatadi!
+    HTML parse mode va 1000 belgilik cheklov orqali hech qachon xatolik yuz bermaydi.
+    """
+    await call.answer()
+    lang = await UsersRepo.get_user_lang(call.from_user.id)
+    job_id = callback_data.job_id
+    page = getattr(callback_data, "page", 0)
+    section = getattr(callback_data, "section", "all")
+
+    job = await JobsRepo.get_by_id(job_id)
+    if not job:
+        await call.answer("Vakansiya topilmadi.", show_alert=True)
+        return
+
+    details_text = format_job_details(job, max_len=1000)
     map_url = f"https://maps.google.com/?q={job.get('lat')},{job.get('lon')}" if job.get("lat") and job.get("lon") else None
 
-    # Aloqa ma'lumotlari
-    phone_info = f"\n📞 **Aloqa:** {job.get('contact_phone')}" if job.get("contact_phone") else ""
+    # Allaqachon ariza berilganmi?
+    student = await StudentsRepo.get_by_tg_id(call.from_user.id)
+    already_applied = False
+    if student:
+        existing = await db.fetchval(
+            "SELECT id FROM applications WHERE job_id = $1 AND student_id = $2",
+            job["id"], student["id"]
+        )
+        already_applied = bool(existing)
 
-    if lang == "ru":
-        details_text = (
-            f"📋 **{job.get('title')}**\n\n"
-            f"🏢 **Работодатель:** {job.get('company_name')} ({org_type_str})\n"
-            f"📍 **Адрес:** {job.get('address')}\n"
-            f"⏰ **График:** {job.get('start_time', '')} – {job.get('end_time', '')}\n"
-            f"💵 **Оплата / Льгота:** {pay_str}\n"
-            f"🎓 **Подходящие специальности:** {majors_str}\n"
-            f"📚 **Мин. курс:** {job.get('min_course_required', 1)}-й курс{phone_info}\n\n"
-            f"🛠 **Обязанности:**\n{duties_str}\n\n"
-            f"🎁 **Преимущества:**\n{perks_str}"
-        )
-        btn_apply = "✅ Подать заявку"
-        btn_map = "🗺 Открыть на карте"
-    elif lang == "en":
-        details_text = (
-            f"📋 **{job.get('title')}**\n\n"
-            f"🏢 **Organization:** {job.get('company_name')} ({org_type_str})\n"
-            f"📍 **Address:** {job.get('address')}\n"
-            f"⏰ **Working Hours:** {job.get('start_time', '')} – {job.get('end_time', '')}\n"
-            f"💵 **Compensation / Benefit:** {pay_str}\n"
-            f"🎓 **Target Majors:** {majors_str}\n"
-            f"📚 **Min Course:** Year {job.get('min_course_required', 1)}{phone_info}\n\n"
-            f"🛠 **Duties:**\n{duties_str}\n\n"
-            f"🎁 **Perks & Benefits:**\n{perks_str}"
-        )
-        btn_apply = "✅ Apply"
-        btn_map = "🗺 View on Google Maps"
+    buttons = []
+    
+    # Ariza tugmasi
+    if already_applied:
+        apply_btn = InlineKeyboardButton(text="✅ Ariza topshirilgan", callback_data="already_applied_info")
     else:
-        details_text = (
-            f"📋 **{job.get('title')}**\n\n"
-            f"🏢 **Ish beruvchi:** {job.get('company_name')} ({org_type_str})\n"
-            f"📍 **Aniq manzil:** {job.get('address')}\n"
-            f"⏰ **Ish vaqti:** {job.get('start_time', '')} – {job.get('end_time', '')}\n"
-            f"💵 **To'lov / Imtiyoz:** {pay_str}\n"
-            f"🎓 **Mos yo'nalishlar:** {majors_str}\n"
-            f"📚 **Minimal kurs:** {job.get('min_course_required', 1)}-kurs{phone_info}\n\n"
-            f"🛠 **Asosiy vazifalar:**\n{duties_str}\n\n"
-            f"🎁 **Qulaylik va imtiyozlar:**\n{perks_str}"
+        apply_btn = InlineKeyboardButton(
+            text="✅ Ariza topshirish",
+            callback_data=JobCarouselCallback(section=section, page=page, action="apply", job_id=job["id"]).pack()
         )
-        btn_apply = "✅ Ariza topshirish"
-        btn_map = "🗺 Xaritada ko'rish"
 
-    buttons = [
-        [InlineKeyboardButton(text=btn_apply, callback_data=StudentJobAction(action="apply", job_id=job["id"]).pack())]
-    ]
+    # 1-qator: Orqaga qaytish va Ariza berish
+    buttons.append([
+        InlineKeyboardButton(
+            text="⬅️ Ro'yxatga qaytish",
+            callback_data=JobCarouselCallback(section=section, page=page, action="back", job_id=job["id"]).pack()
+        ),
+        apply_btn
+    ])
+
     if map_url:
-        buttons.append([InlineKeyboardButton(text=btn_map, url=map_url)])
+        buttons.append([InlineKeyboardButton(text="🗺 Xaritada ko'rish (Google Maps)", url=map_url)])
 
-    # Rasm bilan yuborish
-    img_path = job.get("image_path") or DEFAULT_IMAGE_PATH
-    if not os.path.exists(img_path):
-        img_path = DEFAULT_IMAGE_PATH
+    buttons.append([
+        InlineKeyboardButton(text="🔙 Asosiy menyu", callback_data="close_carousel")
+    ])
 
+    kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+
+    # Shu xabarni tahrirlaymiz
+    is_photo_msg = bool(getattr(call.message, "photo", None))
     try:
-        if os.path.exists(img_path):
-            photo = FSInputFile(img_path)
-            if len(details_text) <= 1024:
-                await call.message.answer_photo(photo=photo, caption=details_text, reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons), parse_mode="Markdown")
-            else:
-                await call.message.answer_photo(photo=photo)
-                await call.message.answer(details_text, reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons), parse_mode="Markdown")
+        if is_photo_msg:
+            await call.message.edit_caption(caption=details_text, reply_markup=kb, parse_mode="HTML")
         else:
-            await call.message.answer(details_text, reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons), parse_mode="Markdown")
+            await call.message.edit_text(text=details_text, reply_markup=kb, parse_mode="HTML")
     except Exception as e:
-        logger.warning(f"Rasm yuborishda xatolik: {e}")
-        await call.message.answer(details_text, reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons), parse_mode="Markdown")
+        logger.warning(f"View details edit error: {e}")
+        try:
+            await call.message.answer(details_text, reply_markup=kb, parse_mode="HTML")
+        except Exception:
+            pass
 
 
-# ==========================================
-# 4. ARIZA TOPSHIRISH (APPLY)
-# ==========================================
+@router.callback_query(JobCarouselCallback.filter(F.action == "back"))
+async def process_back_to_carousel(call: CallbackQuery, callback_data: JobCarouselCallback):
+    """Batafsil oynasidan ro'yxatga qaytish — xuddi o'sha sahifaga qaytadi"""
+    await call.answer()
+    await show_filtered_carousel(call, section=callback_data.section, page=callback_data.page, is_edit=True)
+
+
+# ============================================================================
+# 6. ARIZA TOPSHIRISH (APPLY) — SHU JOYDA STATUS YANGILANADI
+# ============================================================================
+
+@router.callback_query(JobCarouselCallback.filter(F.action == "apply"))
 @router.callback_query(StudentJobAction.filter(F.action == "apply"))
-async def process_apply(call: CallbackQuery, callback_data: StudentJobAction):
+async def process_apply(call: CallbackQuery, callback_data: Any):
+    """
+    Ariza topshirish:
+    Sessiya qulfi tekshiriladi, ariza yoziladi, Telegram push ketadi,
+    va xabardagi tugma [✅ Ariza topshirilgan] ga aylanadi.
+    """
     lang = await UsersRepo.get_user_lang(call.from_user.id)
     student = await StudentsRepo.get_by_tg_id(call.from_user.id)
     if not student:
-        alert_msg = "Avval ro'yxatdan o'ting!" if lang == "uz" else ("Сначала зарегистрируйтесь!" if lang == "ru" else "Please register first!")
-        await call.answer(alert_msg, show_alert=True)
+        await call.answer("Avval ro'yxatdan o'ting!", show_alert=True)
         return
 
-    job = await JobsRepo.get_by_id(callback_data.job_id)
+    job_id = callback_data.job_id
+    page = getattr(callback_data, "page", 0)
+    section = getattr(callback_data, "section", "all")
+
+    job = await JobsRepo.get_by_id(job_id)
     if not job:
-        not_found = "Vakansiya topilmadi." if lang == "uz" else ("Вакансия не найдена." if lang == "ru" else "Job not found.")
-        await call.answer(not_found, show_alert=True)
+        await call.answer("Vakansiya topilmadi.", show_alert=True)
         return
 
-    # Sessiya / Imtihon qulfi tekshiruvi (Tyutor tomonidan o'rnatilgan blokirovka)
+    # 1. Sessiya / Imtihon qulfi tekshiruvi (OTM Tyutori cheklovi)
     from datetime import date
     today = date.today()
     exam_from = student.get("exam_from")
@@ -508,201 +691,110 @@ async def process_apply(call: CallbackQuery, callback_data: StudentJobAction):
             if ef <= today <= et:
                 lock_alert = (
                     f"🔒 DIQQAT: Sizda {exam_from} dan {exam_to} gacha sessiya va imtihon qulfi faol!\n\n"
-                    f"Tyutoringiz tomonidan sessiya qulfi o'rnatilganligi sababli, bu davrda yangi ishlarga ariza topshirish va qabul qilish to'xtatilgan (pauza rejimi)."
-                ) if lang == "uz" else (
-                    f"🔒 ВНИМАНИЕ: С {exam_from} по {exam_to} действует блокировка сессии!\n\n"
-                    f"Тьютор установил запрет на подачу заявок на время экзаменов (режим паузы)."
-                ) if lang == "ru" else (
-                    f"🔒 ATTENTION: Exam lock is active from {exam_from} to {exam_to} by your Tutor. Job applications are locked."
+                    f"OTM Tyutoringiz tomonidan sessiya qulfi o'rnatilganligi sababli, "
+                    f"bu davrda yangi ishlarga ariza topshirish vaqtincha bloklangan."
                 )
                 await call.answer(lock_alert, show_alert=True)
                 return
         except Exception as e:
             logger.warning(f"Exam lock check error in process_apply: {e}")
 
-    # Allaqachon ariza berilganligini tekshirish
+    # 2. Allaqachon ariza berilganligini tekshirish
     existing_app = await db.fetchrow(
         "SELECT id, status FROM applications WHERE job_id = $1 AND student_id = $2",
         job["id"], student["id"]
     )
     if existing_app:
-        warn = "Siz ushbu vakansiyaga allaqachon ariza yuborgansiz!" if lang == "uz" else ("Вы уже подали заявку на эту вакансию!" if lang == "ru" else "You have already applied for this job!")
-        await call.answer(warn, show_alert=True)
+        await call.answer("Siz ushbu vakansiyaga allaqachon ariza yuborgansiz!", show_alert=True)
         return
 
-    # Yosh himoyasi tekshiruvi (Mehnat kodeksi 411-modda)
+    # 3. Yosh himoyasi tekshiruvi (Mehnat kodeksi 411-modda)
     if student.get("age", 19) < 18 and (is_night_job(job) or job.get("min_age", 16) >= 18):
-        warn = "Kechirasiz, 18 yoshgacha bo'lgan talabalar tungi ishlarga qabul qilinmaydi." if lang == "uz" else ("Несовершеннолетние не допускаются к ночным сменам." if lang == "ru" else "Night work prohibited under 18.")
-        await call.answer(warn, show_alert=True)
+        await call.answer("Kechirasiz, 18 yoshgacha bo'lgan talabalarga tungi va 18+ ishlar taqiqlangan.", show_alert=True)
         return
 
-    # Kontrakt granti uchun GPA tekshiruvi
+    # 4. Kontrakt granti uchun GPA tekshiruvi
     min_gpa = float(job.get("min_gpa_required") or 0.0)
     student_gpa = float(student.get("gpa_score") or 0.0)
     if min_gpa > 0.0 and student_gpa < min_gpa:
-        warn = f"GPA yetarli emas ({student_gpa} < {min_gpa})." if lang == "uz" else (f"Недостаточный GPA ({student_gpa} < {min_gpa})." if lang == "ru" else f"Insufficient GPA ({student_gpa} < {min_gpa}).")
-        await call.answer(warn, show_alert=True)
+        await call.answer(f"GPA yetarli emas ({student_gpa} < {min_gpa}).", show_alert=True)
         return
 
-    # Ariza yaratish
-    await ApplicationsRepo.create_application(
+    # 5. Arizani bazada yaratish
+    app_id = await ApplicationsRepo.create_application(
         job_id=job["id"],
         student_id=student["id"],
-        match_score=90.0,
+        match_score=95.0,
     )
 
-    alert_ok = "✅ Arizangiz qabul qilindi!" if lang == "uz" else ("✅ Заявка принята!" if lang == "ru" else "✅ Application submitted!")
-    await call.answer(alert_ok, show_alert=True)
+    await call.answer("🎉 Arizangiz muvaffaqiyatli qabul qilindi!", show_alert=True)
 
-    if lang == "ru":
-        reply_text = (
-            f"🎉 **Ваша заявка успешно отправлена!**\n\n"
-            f"🏢 **Организация:** {job.get('company_name')}\n"
-            f"📋 **Вакансия:** {job.get('title')}\n\n"
-            f"Работодатель получил ваше резюме и контакты. Как только решение будет принято, бот пришлёт вам уведомление."
-        )
-    elif lang == "en":
-        reply_text = (
-            f"🎉 **Your application has been successfully submitted!**\n\n"
-            f"🏢 **Organization:** {job.get('company_name')}\n"
-            f"📋 **Job:** {job.get('title')}\n\n"
-            f"The employer has received your resume and contact info. You will be notified here as soon as an update arrives."
-        )
-    else:
-        reply_text = (
-            f"🎉 **Arizangiz muvaffaqiyatli yuborildi!**\n\n"
-            f"🏢 **Tashkilot:** {job.get('company_name')}\n"
-            f"📋 **Vakansiya:** {job.get('title')}\n\n"
-            f"Ish beruvchi kadrlar bo'limi nomzodingizni ko'rib chiqmoqda. Natija chiqishi bilan bot orqali sizga xabar beriladi."
-        )
+    # 6. Shu xabardagi tugmani yangilash ([✅ Ariza topshirilgan] ga o'tkazish)
+    try:
+        current_kb = call.message.reply_markup
+        if current_kb and current_kb.inline_keyboard:
+            new_rows = []
+            for row in current_kb.inline_keyboard:
+                new_row = []
+                for btn in row:
+                    if btn.callback_data and (":apply:" in btn.callback_data or (btn.callback_data.startswith("jcar:") and ":apply:" in btn.callback_data)):
+                        new_row.append(InlineKeyboardButton(text="✅ Ariza topshirilgan", callback_data="already_applied_info"))
+                    else:
+                        new_row.append(btn)
+                new_rows.append(new_row)
+            await call.message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(inline_keyboard=new_rows))
+    except Exception as e:
+        logger.debug(f"Reply markup edit xatosi: {e}")
 
-    await call.message.reply(reply_text, parse_mode="Markdown")
-
-
-# ==========================================
-# 5. KONTRAKT GRANTLARI BO'LIMI
-# ==========================================
-@router.message(F.text.in_(get_button_variants("BTN_STUDENT_GRANTS")))
-async def show_tuition_grants(msg: Message):
-    lang = await UsersRepo.get_user_lang(msg.from_user.id)
-    t = get_i18n(lang)
-
-    student = await StudentsRepo.get_by_tg_id(msg.from_user.id)
-    if not student:
-        await msg.answer(t.MSG_PLEASE_REGISTER)
-        return
-
-    grant_jobs = await JobsRepo.get_open_jobs(listing_type="tuition_grant_job")
-    if not grant_jobs:
-        # Agar maxsus listing_type bo'yicha bo'lmasa, kontrakt qoplaydigan barcha ishlarni ko'rsatish
-        grant_jobs = await db.fetch("SELECT j.*, e.company_name, e.address FROM jobs j JOIN employers e ON j.employer_id = e.id WHERE j.tuition_coverage_percent > 0 AND j.status = 'open'")
-
-    if not grant_jobs:
-        await msg.answer(t.MSG_NO_GRANTS_YET)
-        return
-
-    intro = (
-        "🎓 **Kontrakt to'lab beriladigan nufuzli davlat va xususiy grantlar:**\n"
-        "Ushbu vakansiyalarga qabul qilingan talabalarning yillik to'lov-kontrakti tashkilot tomonidan 100% to'lab beriladi 👇"
+    # 7. Tasdiq xabari yuborish
+    reply_text = (
+        f"🎉 <b>Arizangiz muvaffaqiyatli yuborildi!</b>\n\n"
+        f"🏢 <b>Tashkilot:</b> {html.escape(str(job.get('company_name')))}\n"
+        f"📋 <b>Vakansiya:</b> {html.escape(str(job.get('title')))}\n\n"
+        f"Ish beruvchi kadrlar bo'limi nomzodingizni ko'rib chiqmoqda. Natija chiqishi bilan bot orqali sizga bildirishnoma boradi."
     )
-    if lang == "ru":
-        intro = (
-            "🎓 **Вакансии с оплатой годового контракта:**\n"
-            "Организация оплачивает 100% контракта студента в обмен на стажировку и работу 👇"
+    await call.message.reply(reply_text, parse_mode="HTML")
+
+    # 8. Ish beruvchiga zudlik bilan Telegram orqali bildirishnoma yuborish
+    try:
+        emp_tg = await db.fetchval(
+            "SELECT u.tg_id FROM employers e JOIN users u ON e.user_id = u.id WHERE e.id = $1",
+            job.get("employer_id")
         )
-    elif lang == "en":
-        intro = (
-            "🎓 **Tuition Sponsorship Programs:**\n"
-            "Employers offering 100% tuition sponsorship for qualified students 👇"
-        )
-    await msg.answer(intro, parse_mode="Markdown")
-
-    for job in grant_jobs[:5]:
-        is_eligible, score, reasons = calculate_match_score(student, job)
-        reasons_text = " • " + " • ".join(reasons)
-
-        if lang == "ru":
-            text = (
-                f"🎓 **{job.get('title')}** (Совпадение: {score}%)\n"
-                f"🏢 Организация: {job.get('company_name')}\n"
-                f"📍 Адрес: {job.get('address')}\n"
-                f"🎁 **Льгота:** Оплата годового контракта {job.get('tuition_coverage_percent', 100)}%!\n"
-                f"📋 **Требование:** Мин. GPA {job.get('min_gpa_required', 4.0)}+ (У вас: {student.get('gpa_score')})\n"
-                f"⏳ Отработка: {job.get('work_obligation_years', 1)} год(а)\n\n"
-                f"💡 {reasons_text}"
+        if emp_tg:
+            await call.bot.send_message(
+                emp_tg,
+                f"📩 <b>Yangi Nomzod arizasi kelib tushdi!</b>\n\n"
+                f"💼 <b>Vakansiya:</b> {html.escape(str(job.get('title')))}\n"
+                f"👤 <b>Talaba:</b> {html.escape(str(student.get('full_name')))}\n"
+                f"🎓 <b>Yo'nalish:</b> {html.escape(str(student.get('major')))} ({student.get('course')}-kurs)\n"
+                f"⭐ <b>GPA:</b> {student.get('gpa_score')}\n\n"
+                f"<i>Nomzodni ko'rib chiqish uchun botdagi '📥 Yangi arizalar (Inbox)' bo'limiga kiring.</i>",
+                parse_mode="HTML"
             )
-            btn_apply = "📝 Подать заявку на грант"
-            btn_details = "ℹ️ Подробнее"
-        elif lang == "en":
-            text = (
-                f"🎓 **{job.get('title')}** (Match: {score}%)\n"
-                f"🏢 Organization: {job.get('company_name')}\n"
-                f"📍 Address: {job.get('address')}\n"
-                f"🎁 **Benefit:** {job.get('tuition_coverage_percent', 100)}% Tuition Sponsorship!\n"
-                f"📋 **Requirement:** Min GPA {job.get('min_gpa_required', 4.0)}+ (Yours: {student.get('gpa_score')})\n"
-                f"⏳ Service commitment: {job.get('work_obligation_years', 1)} year(s)\n\n"
-                f"💡 {reasons_text}"
+    except Exception as e:
+        logger.debug(f"Notify employer failed: {e}")
+
+    # 9. Adminlarga bildirishnoma
+    try:
+        for admin_id in settings.ADMIN_IDS:
+            await call.bot.send_message(
+                admin_id,
+                f"📢 <b>Yangi ariza:</b>\n"
+                f"Talaba: <b>{html.escape(str(student.get('full_name')))}</b>\n"
+                f"Vakansiya: <b>{html.escape(str(job.get('title')))}</b> ({html.escape(str(job.get('company_name')))})",
+                parse_mode="HTML"
             )
-            btn_apply = "📝 Apply for Tuition Grant"
-            btn_details = "ℹ️ Details"
-        else:
-            text = (
-                f"🎓 **{job.get('title')}** (Moslik: {score}%)\n"
-                f"🏢 Tashkilot: {job.get('company_name')}\n"
-                f"📍 Manzil: {job.get('address')}\n"
-                f"🎁 **Imtiyoz:** Yillik to'lov-kontrakt {job.get('tuition_coverage_percent', 100)}% to'lab beriladi!\n"
-                f"📋 **Talab:** Minimal GPA {job.get('min_gpa_required', 4.0)}+ (Sizda: {student.get('gpa_score')})\n"
-                f"⏳ Ishlab berish majburiyati: {job.get('work_obligation_years', 1)} yil\n\n"
-                f"💡 {reasons_text}"
-            )
-            btn_apply = "📝 Grantga ariza topshirish"
-            btn_details = "ℹ️ Batafsil"
-
-        kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text=btn_apply,
-                        callback_data=StudentJobAction(action="apply", job_id=job["id"]).pack(),
-                    ),
-                    InlineKeyboardButton(
-                        text=btn_details,
-                        callback_data=StudentJobAction(action="view", job_id=job["id"]).pack(),
-                    ),
-                ]
-            ]
-        )
-
-        img_path = job.get("image_path") or DEFAULT_IMAGE_PATH
-        if not os.path.exists(img_path):
-            img_path = DEFAULT_IMAGE_PATH
-
-        try:
-            if os.path.exists(img_path):
-                photo = FSInputFile(img_path)
-                if len(text) <= 1024:
-                    await msg.answer_photo(photo=photo, caption=text, reply_markup=kb, parse_mode="Markdown")
-                else:
-                    await msg.answer_photo(photo=photo)
-                    await msg.answer(text, reply_markup=kb, parse_mode="Markdown")
-            else:
-                await msg.answer(text, reply_markup=kb, parse_mode="Markdown")
-        except Exception:
-            await msg.answer(text, reply_markup=kb, parse_mode="Markdown")
+    except Exception:
+        pass
 
 
-# ==========================================
-# 6. BILDIRISHNOMA OBUNASI (NOTIFY ME)
-# ==========================================
+# ============================================================================
+# 7. BILDIRISHNOMALARGA OBUNA BO'LISH
+# ============================================================================
+
 @router.callback_query(F.data == "notify_me_subscription")
 async def process_notify_me(call: CallbackQuery):
-    lang = await UsersRepo.get_user_lang(call.from_user.id)
-    if lang == "ru":
-        alert_txt = "Оповещения включены! Как только появится подходящая вакансия, мы сразу уведомим вас."
-    elif lang == "en":
-        alert_txt = "Alerts enabled! As soon as a matching job or internship opens, you will get instant notification."
-    else:
-        alert_txt = "Bildirishnomalarga obuna bo'ldingiz! Sizga mos yangi ish chiqishi bilan bot zudlik bilan xabar yuboradi."
-
+    alert_txt = "Bildirishnomalarga obuna bo'ldingiz! Sizga mos yangi ish chiqishi bilan bot zudlik bilan xabar yuboradi."
     await call.answer(alert_txt, show_alert=True)
-    await call.message.reply(f"🔔 **{alert_txt}**", parse_mode="Markdown")
+    await call.message.reply(f"🔔 <b>{alert_txt}</b>", parse_mode="HTML")

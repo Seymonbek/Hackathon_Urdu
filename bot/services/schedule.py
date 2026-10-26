@@ -1,5 +1,5 @@
 from datetime import datetime, time
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 
 # UrDU va OTM standart para vaqtlari (juftliklar)

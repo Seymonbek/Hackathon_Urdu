@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasbdosh — UrDU Talabalar Bandligi, Amaliyoti va Kontrakt Granti Birjasi</title>
+    
+    <!-- Shriftlar -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: {
+                            900: '#070b13',
+                            800: '#0d1322',
+                            700: '#141d33',
+                            600: '#1e2946',
+                        },
+                        brand: {
+                            blue: '#3b82f6',
+                            emerald: '#10b981',
+                            amber: '#f59e0b',
+                            purple: '#8b5cf6',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Leaflet.js Map CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Telegram WebApp JS -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        body {
+            background-color: #070b13;
+            color: #f1f5f9;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.1) 0%, transparent 45%);
+            background-attachment: fixed;
+        }
+
+        .glass-panel {
+            background: rgba(13, 19, 34, 0.78);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: rgba(20, 29, 51, 0.65);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.25s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(59, 130, 246, 0.35);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px 0 rgba(59, 130, 246, 0.15);
+        }
+
+        /* Leaflet popup styling in dark mode */
+        .leaflet-popup-content-wrapper {
+            background: #0d1322 !important;
+            color: #f1f5f9 !important;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            border-radius: 12px !important;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.6) !important;
+        }
+        .leaflet-popup-tip {
+            background: #0d1322 !important;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #070b13;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e2946;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3b82f6;
+        }
+
+        .pulse-live {
+            animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulseRing {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.15); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+
+    <!-- YUQORI HEADER / NAVIGATION -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-white/10 px-4 lg:px-8 py-3.5">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            
+            <!-- Logo va Brend -->
+            <div class="flex items-center gap-3.5 cursor-pointer" onclick="switchTab('tab-student')">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-emerald-500 flex items-center justify-center font-display font-extrabold text-white text-2xl shadow-lg shadow-blue-500/30">
+                    K
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-display font-extrabold text-xl lg:text-2xl tracking-tight text-white">Kasbdosh</span>
+                        <span class="px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-live"></span> UrDU Jonli
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 font-medium hidden sm:block">Urganch Davlat Universiteti Talabalar Bandligi & Amaliyot Birjasi</p>
+                </div>
+            </div>
+
+            <!-- O'ng tugmalar -->
+            <div class="flex items-center gap-3">
+                <button onclick="openExamPolicyModal()" class="hidden md:flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/25 hover:bg-amber-500/20 transition">
+                    <i class="fa-solid fa-scale-balanced"></i> Huquqiy Himoya
+                </button>
+                <a href="https://t.me/imkon_ish_bot" target="_blank" class="flex items-center gap-2 px-4 py-2 text-xs lg:text-sm font-bold rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-600/30 transition transform hover:-translate-y-0.5">
+                    <i class="fa-brands fa-telegram text-base"></i>
+                    <span>Telegram Bot (@imkon_ish_bot)</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ASOSIY TAB NAVIGATION TUGMALARI -->
+    <nav class="glass-panel border-b border-white/5 py-2.5 px-4 sticky top-[69px] z-30">
+        <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto no-scrollbar">
+            
+            <button id="btn-tab-student" onclick="switchTab('tab-student')" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition bg-blue-600 text-white shadow-lg shadow-blue-600/30">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Talaba & "Oltin Uchburchak"</span>
+            </button>
+
+            <button id="btn-tab-employer" onclick="switchTab('tab-employer')" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition text-slate-400 hover:text-white hover:bg-white/5">
+                <i class="fa-solid fa-briefcase"></i>
+                <span>Ish Beruvchi & Korxona</span>
+            </button>
+
+            <button id="btn-tab-tutor" onclick="switchTab('tab-tutor')" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition text-slate-400 hover:text-white hover:bg-white/5">
+                <i class="fa-solid fa-chalkboard-user"></i>
+                <span>OTM Tyutori & Sessiya Qulfi</span>
+                <span class="px-1.5 py-0.5 text-[9px] bg-amber-500/20 text-amber-300 rounded font-bold">WOW</span>
+            </button>
+
+            <button id="btn-tab-analytics" onclick="switchTab('tab-analytics')" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 whitespace-nowrap transition text-slate-400 hover:text-white hover:bg-white/5">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Xakaton Tahlili & Rektorat</span>
+            </button>
+
+        </div>
+    </nav>
+
+    <!-- ASOSIY BODY KONTENTI -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+        <!-- ========================================================================= -->
+        <!-- TAB 1: TALABA VA OLTIN UCHBURCHAK BIRJASI -->
+        <!-- ========================================================================= -->
+        <section id="tab-student" class="tab-content space-y-6">
+            
+            <!-- Jonli Statistika Kartochkalari (4 ta blok) -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                
+                <div class="glass-card rounded-2xl p-4 sm:p-5 border-l-4 border-l-blue-500">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Jami Ochiq Ishlar</span>
+                        <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-briefcase"></i>
+                        </div>
+                    </div>
+                    <div id="stat-open-jobs" class="text-2xl sm:text-3xl font-display font-extrabold text-white">...</div>
+                    <p class="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+                        <span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check"></i> Faol</span> Urganch bo'yicha
+                    </p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4 sm:p-5 border-l-4 border-l-emerald-500">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Davlat Amaliyotlari</span>
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-landmark"></i>
+                        </div>
+                    </div>
+                    <div id="stat-internships" class="text-2xl sm:text-3xl font-display font-extrabold text-emerald-400">...</div>
+                    <p class="text-[11px] text-slate-400 mt-1">Rasmiy OTM tasdiqli</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4 sm:p-5 border-l-4 border-l-purple-500">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Kontrakt Grantlari</span>
+                        <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-award"></i>
+                        </div>
+                    </div>
+                    <div id="stat-grants" class="text-2xl sm:text-3xl font-display font-extrabold text-purple-400">...</div>
+                    <p class="text-[11px] text-slate-400 mt-1">100% to'lab beriladigan</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4 sm:p-5 border-l-4 border-l-amber-500">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Band Talabalar</span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+                    </div>
+                    <div id="stat-employed" class="text-2xl sm:text-3xl font-display font-extrabold text-amber-400">...</div>
+                    <p class="text-[11px] text-slate-400 mt-1">Rasmiy ishga kirganlar</p>
+                </div>
+
+            </div>
+
+            <!-- Sessiya Qulfi Ogohlantirish Paneli (Agar tyutor qulf qo'ygan bo'lsa) -->
+            <div id="global-lock-banner" class="hidden rounded-2xl p-5 bg-gradient-to-r from-red-950/80 to-rose-900/60 border border-red-500/40 text-red-200">
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center text-2xl flex-shrink-0">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-display font-bold text-lg text-white">🔒 DIQQAT: OTM Tyutori Tomonidan Sessiya Qulfi Faollashtirilgan!</h4>
+                        <p class="text-xs sm:text-sm text-red-200/90 mt-1">
+                            Urganch Davlat Universiteti (UrDU) imtihonlar sessiyasi munosabati bilan yangi ishlarga ariza topshirish vaqtincha to'xtatildi. 
+                            Talabalar bor diqqatini imtihonlarga qaratishi lozim. Vakansiyalarni faqat ko'rib chiqish mumkin.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- "OLTIN UCHBURCHAK" AQLLI FILTRI -->
+            <div class="glass-panel rounded-2xl p-5 lg:p-6 space-y-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-white/10 pb-4">
+                    <div>
+                        <h3 class="font-display font-bold text-lg text-white flex items-center gap-2">
+                            <span class="text-amber-400"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+                            "Oltin Uchburchak" Aqlli Moslashtirish Filtri
+                        </h3>
+                        <p class="text-xs text-slate-400">Talaba mutaxassisligi, dars jadvali, GPA va masofasiga ko'ra 0-100% moslik ballini hisoblaydi</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="filter-status-tag" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                            Moslik: Faol
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Filtr Maydonlari -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    <!-- 1. Mutaxassislik -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">🎓 OTM Mutaxassisligi</label>
+                        <select id="filter-major" onchange="fetchJobs()" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition">
+                            <option value="Dasturiy injiniring" selected>Dasturiy injiniring / IT</option>
+                            <option value="Yurisprudensiya">Yurisprudensiya / Huquq</option>
+                            <option value="Davolash ishi">Davolash ishi / Tibbiyot</option>
+                            <option value="Bank ishi">Bank ishi / Iqtisodiyot</option>
+                            <option value="Ingliz tili">Xorijiy tillar / Ingliz tili</option>
+                            <option value="Umumiy">Umumiy (Barcha yo'nalishlar)</option>
+                        </select>
+                    </div>
+
+                    <!-- 2. Kurs -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">📚 Bosqich / Kurs</label>
+                        <select id="filter-course" onchange="fetchJobs()" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition">
+                            <option value="1">1-kurs</option>
+                            <option value="2" selected>2-kurs</option>
+                            <option value="3">3-kurs</option>
+                            <option value="4">4-kurs</option>
+                        </select>
+                    </div>
+
+                    <!-- 3. GPA Balli -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-semibold text-slate-300">⭐ GPA O'zlashtirish</label>
+                            <span id="gpa-val" class="text-xs font-bold text-amber-400">4.5 / 5.0</span>
+                        </div>
+                        <input id="filter-gpa" type="range" min="3.0" max="5.0" step="0.1" value="4.5" oninput="document.getElementById('gpa-val').innerText = this.value + ' / 5.0'; fetchJobs()" class="w-full accent-blue-500 cursor-pointer">
+                    </div>
+
+                    <!-- 4. Qidiruv Masofasi -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-semibold text-slate-300">📍 Maksimal Masofa</label>
+                            <span id="dist-val" class="text-xs font-bold text-blue-400">5.0 km</span>
+                        </div>
+                        <input id="filter-dist" type="range" min="1.0" max="25.0" step="0.5" value="5.0" oninput="document.getElementById('dist-val').innerText = this.value + ' km'; fetchJobs()" class="w-full accent-blue-500 cursor-pointer">
+                    </div>
+
+                </div>
+
+                <!-- Tezkor Kategoriya Chiplari -->
+                <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-white/5">
+                    <span class="text-xs text-slate-400 font-medium mr-1">Tezkor filtr:</span>
+                    <button onclick="setListingFilter('all', this)" class="category-chip px-3 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white">🌟 Barchasi</button>
+                    <button onclick="setListingFilter('paid_job', this)" class="category-chip px-3 py-1.5 rounded-lg text-xs font-bold transition bg-white/5 text-slate-300 hover:bg-white/10">💰 Part-Time Ishlar</button>
+                    <button onclick="setListingFilter('state_internship', this)" class="category-chip px-3 py-1.5 rounded-lg text-xs font-bold transition bg-white/5 text-slate-300 hover:bg-white/10">🏛 Davlat Amaliyotlari</button>
+                    <button onclick="setListingFilter('tuition_grant_job', this)" class="category-chip px-3 py-1.5 rounded-lg text-xs font-bold transition bg-white/5 text-slate-300 hover:bg-white/10">🎓 Kontrakt Grantlari (100%)</button>
+                </div>
+            </div>
+
+            <!-- LEAFLET.JS INTERAKTIV URGANCH XARITASI -->
+            <div class="glass-panel rounded-2xl p-5 lg:p-6 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-display font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                            <i class="fa-solid fa-map-location-dot text-emerald-400"></i>
+                            Urganch Shahri Bo'yicha Interaktiv Vakansiyalar Xaritasi
+                        </h3>
+                        <p class="text-xs text-slate-400">OTM (UrDU) va korxonalarning aniq geolokatsiyasi. Pin ustiga bosib arizani ko'ring.</p>
+                    </div>
+                    <button onclick="resetMapView()" class="px-3 py-1 text-xs rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition">
+                        <i class="fa-solid fa-crosshairs"></i> UrDU Markaz
+                    </button>
+                </div>
+                <div id="jobs-map" class="w-full h-72 sm:h-80 lg:h-96 rounded-xl border border-white/10 z-10 shadow-inner"></div>
+            </div>
+
+            <!-- VAKANSIYALAR RO'YXATI -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-display font-bold text-lg text-white flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-blue-400"></i>
+                        <span>Sizga Mos Keladigan Vakansiyalar</span>
+                        <span id="jobs-count-badge" class="px-2 py-0.5 text-xs font-bold rounded-full bg-blue-500/20 text-blue-300">Yuklanmoqda...</span>
+                    </h3>
+                    <button onclick="fetchJobs()" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold">
+                        <i class="fa-solid fa-rotate-right"></i> Yangilash
+                    </button>
+                </div>
+
+                <!-- Vakansiya kartochkalari konteyneri -->
+                <div id="jobs-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dinamik ravishda JS orqali to'ldiriladi -->
+                </div>
+            </div>
+
+            <!-- HUQUQIY HIMOYA VA 14 KUNLIK BO'SHASH ARIZASI BLOKI -->
+            <div class="glass-panel rounded-2xl p-6 border-l-4 border-l-amber-500 space-y-4">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h4 class="font-display font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-amber-400"></i>
+                            O'zbekiston Mehnat Qonunchiligi Bo'yicha Talaba Himoyasi
+                        </h4>
+                        <p class="text-xs text-slate-400 mt-1">Mehnat kodeksi 160-moddasi (14 kunlik ogohlantirish) va 411-moddasi (18+ yosh va tungi smena)</p>
+                    </div>
+                    <button onclick="openResignationModal()" class="px-4 py-2 text-xs font-bold rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition flex items-center gap-1.5 whitespace-nowrap">
+                        <i class="fa-solid fa-file-signature"></i> 14 Kunlik Ariza Generatori
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-300">
+                    <div class="p-3 rounded-xl bg-slate-900/60 border border-white/5">
+                        <span class="font-bold text-amber-400 block mb-1">📜 MK 160-modda (Bo'shash huquqi):</span>
+                        Talaba o'z xohishiga ko'ra ishdan bo'shamoqchi bo'lsa, ish beruvchini 14 kun oldin yozma xabardor qiladi. Ushbu muddat o'tgach, ish beruvchi mehnat daftarchasini berishga va to'liq hisob-kitob qilishga majbur.
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900/60 border border-white/5">
+                        <span class="font-bold text-blue-400 block mb-1">🌙 MK 411-modda & TTJ 22:00:</span>
+                        18 yoshga to'lmagan talabalarni tungi smenalarga (soat 22:00 dan 06:00 gacha) jalb qilish qat'iyan taqiqlanadi. Talabalar turar joyi (TTJ) tartibiga binoan tungi smenaga ruxsat olinishi shart.
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- TAB 2: ISH BERUVCHI VA KORXONA KABINETI -->
+        <!-- ========================================================================= -->
+        <section id="tab-employer" class="tab-content hidden space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Chap tomon: Yangi Vakansiya Joylash Formasi (7 ustun) -->
+                <div class="lg:col-span-7 glass-panel rounded-2xl p-6 space-y-5">
+                    <div class="border-b border-white/10 pb-4">
+                        <h3 class="font-display font-bold text-xl text-white flex items-center gap-2">
+                            <i class="fa-solid fa-circle-plus text-blue-400"></i>
+                            Yangi Vakansiya, Amaliyot yoki Kontrakt Granti Joylash
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1">E'lon joylangach, darhol barcha mos UrDU talabalariga Telegram bot orqali push-bildirishnoma boradi.</p>
+                    </div>
+
+                    <form id="create-job-form" onsubmit="handleCreateJob(event)" class="space-y-4">
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">🏢 Tashkilot Nomi *</label>
+                                <input type="text" id="job-company" required placeholder="Masalan: 'Xorazm IT Hub' yoki 'Adliya boshqarmasi'" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">🏛 Tashkilot Turi</label>
+                                <select id="job-org-type" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                                    <option value="commercial">Xususiy Korxona / MChJ / Biznes</option>
+                                    <option value="state_agency">Davlat Organi / Tashkilot</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">💼 Lavozim Nomi *</label>
+                                <input type="text" id="job-title" required placeholder="Masalan: Frontend Dasturchi yoki Yurist yordamchisi" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">📋 E'lon / Listing Turi</label>
+                                <select id="job-listing-type" onchange="toggleTuitionInput(this.value)" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                                    <option value="paid_job">💰 Pullik Part-Time Ish (Smena / Oylik)</option>
+                                    <option value="state_internship">🏛 Rasmiy Davlat / Kasbiy Amaliyoti</option>
+                                    <option value="tuition_grant_job">🎓 100% Kontrakt To'lanadigan Grant</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">📁 Soha (Klaster)</label>
+                                <select id="job-category" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                                    <option value="it">IT & Dasturlash</option>
+                                    <option value="court_law">Huquq & Sud</option>
+                                    <option value="medical">Tibbiyot & Farmatsiya</option>
+                                    <option value="office">Moliya & Bank</option>
+                                    <option value="education">Pedagogika & Ta'lim</option>
+                                    <option value="logistics">Logistika & Transport</option>
+                                    <option value="retail">Savdo & Servis</option>
+                                    <option value="general">Umumiy / Har qanday</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">⏰ Boshlanish Vaqti</label>
+                                <input type="time" id="job-start" value="14:00" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">⏰ Tugash Vaqti</label>
+                                <input type="time" id="job-end" value="18:00" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">💰 To'lov Miqdori (so'm)</label>
+                                <input type="number" id="job-pay" value="150000" min="0" step="10000" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div id="tuition-wrapper">
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">🎓 Kontrakt Qoplash Foizi (%)</label>
+                                <input type="number" id="job-tuition" value="0" min="0" max="100" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">📍 Aniq Manzil (Urganch shahri) *</label>
+                                <input type="text" id="job-address" required value="Urganch sh., Al-Xorazmiy ko'chasi" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">📞 Aloqa Telefoni *</label>
+                                <input type="text" id="job-phone" required value="+998901234567" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">👥 Kvota (O'rinlar soni)</label>
+                            <input type="number" id="job-slots" value="2" min="1" max="100" class="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                        </div>
+
+                        <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>Vakansiyani Joylash & Telegram Push Yuborish</span>
+                        </button>
+
+                    </form>
+                </div>
+
+                <!-- O'ng tomon: Soliq Imtiyoz Kalkulyatori (5 ustun) -->
+                <div class="lg:col-span-5 space-y-5">
+                    
+                    <div class="glass-panel rounded-2xl p-6 border-t-4 border-t-emerald-500 space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-calculator"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-display font-bold text-base text-white">Soliq Kodeksi 378-modda Imtiyoz Kalkulyatori</h4>
+                                <p class="text-xs text-slate-400">Talaba kontraktini to'lab beruvchi korxonalar uchun</p>
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            O'zbekiston Respublikasi Soliq kodeksining 378-moddasi 16-bandiga binoan, yuridik shaxslar tomonidan OTM talabalarining kontrakt to'loviga yo'naltirilgan mablag'lariga <b>jismoniy shaxslardan olinadigan daromad solig'i (12%)</b> va <b>foyda solig'i (15%)</b> solinmaydi hamda korxona xarajatlaridan to'liq chegiriladi!
+                        </p>
+
+                        <div class="space-y-2 pt-2 border-t border-white/5">
+                            <label class="block text-xs font-semibold text-slate-300">Talabaning yillik kontrakt summasi:</label>
+                            <div class="flex items-center gap-2">
+                                <input id="calc-contract" type="range" min="5000000" max="25000000" step="500000" value="12000000" oninput="calculateTaxBenefit(this.value)" class="w-full accent-emerald-500 cursor-pointer">
+                            </div>
+                            <div class="flex justify-between items-center text-xs text-slate-400">
+                                <span>5 mln</span>
+                                <span id="contract-label" class="text-sm font-bold text-emerald-400">12,000,000 so'm</span>
+                                <span>25 mln</span>
+                            </div>
+                        </div>
+
+                        <!-- Hisob natijasi kartasi -->
+                        <div class="rounded-xl p-4 bg-slate-900/90 border border-emerald-500/30 space-y-3">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-400">Foyda solig'idan (15%) to'g'ridan-to'g'ri tejaladi:</span>
+                                <span id="tax-saved-profit" class="font-bold text-emerald-400 font-display text-sm">1,800,000 so'm</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-400">JShODS (12%) soliq imtiyozi:</span>
+                                <span id="tax-saved-income" class="font-bold text-blue-400 font-display text-sm">1,440,000 so'm</span>
+                            </div>
+                            <div class="pt-2 border-t border-white/10 flex justify-between items-center">
+                                <span class="text-xs font-bold text-white">Jami soliqdan iqtisod:</span>
+                                <span id="tax-saved-total" class="font-extrabold text-emerald-300 font-display text-base">3,240,000 so'm</span>
+                            </div>
+                        </div>
+
+                        <div class="text-[11px] text-slate-400 italic">
+                            💡 Korxona iqtidorli talabaga kontrakt to'lab berish orqali ham soliqdan yutadi, ham o'ziga sodiq mutaxassisni 1-2 yilga kafolatlaydi!
+                        </div>
+                    </div>
+
+                    <!-- Tezkor maslahat -->
+                    <div class="glass-card rounded-2xl p-5 space-y-3">
+                        <h4 class="font-display font-bold text-sm text-white flex items-center gap-2">
+                            <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                            Ish Beruvchiga Maslahat
+                        </h4>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Vakansiya joylaganingizda ish vaqtini darsdan keyingi vaqtga (14:00 dan keyin) belgilasangiz, UrDU talabalari arizalari soni 3 barobar ko'proq bo'ladi.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- TAB 3: OTM TYUTORI VA SESSIYA QULFI BOSHQARUVI (WOW-FUNKSIYA) -->
+        <!-- ========================================================================= -->
+        <section id="tab-tutor" class="tab-content hidden space-y-6">
+            
+            <!-- Tyutor Profili & Katta Boshqaruv Pulti -->
+            <div class="glass-panel rounded-2xl p-6 border-l-4 border-l-blue-600 space-y-5">
+                
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center text-2xl font-display font-bold shadow-lg shadow-blue-500/30">
+                            <i class="fa-solid fa-user-tie"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 id="tutor-name" class="font-display font-bold text-xl text-white">Alisher Boboyev</h3>
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                    UrDU Bosh Tyutori
+                                </span>
+                            </div>
+                            <p id="tutor-faculty" class="text-xs text-slate-400 mt-0.5">Raqamli texnologiyalar fakulteti | Dasturiy injiniring 211-guruh</p>
+                        </div>
+                    </div>
+
+                    <!-- Joriy Sessiya Status Indikatori -->
+                    <div id="tutor-lock-status-badge" class="px-4 py-2.5 rounded-xl border flex items-center gap-3">
+                        <!-- JS orqali to'ldiriladi -->
+                    </div>
+                </div>
+
+                <!-- KATTA SESSIYA QULFI BOSHQARUV TUGMALARI -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-white/10">
+                    <button onclick="setExamLock('lock', 20)" class="py-3 px-5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-sm shadow-lg shadow-red-600/30 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2.5">
+                        <i class="fa-solid fa-lock text-base"></i>
+                        <span>Guruhga 20 Kunlik Sessiya Qulfi O'rnatish</span>
+                    </button>
+
+                    <button onclick="setExamLock('unlock')" class="py-3 px-5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2.5">
+                        <i class="fa-solid fa-lock-open text-base"></i>
+                        <span>Sessiya Qulfini Ochish (Ish Qidirishga Ruxsat)</span>
+                    </button>
+                </div>
+
+                <p class="text-xs text-slate-400 italic">
+                    ℹ️ Qulf yoqilganda guruhdagi barcha talabalarning Telegram botiga zudlik bilan rasmiy ogohlantirish boradi va yangi ishlarga ariza topshirish to'liq bloklanadi.
+                </p>
+
+            </div>
+
+            <!-- GURUH TALABALARI MONITORINGI JADVALI -->
+            <div class="glass-panel rounded-2xl p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-display font-bold text-lg text-white flex items-center gap-2">
+                            <i class="fa-solid fa-users-viewfinder text-blue-400"></i>
+                            Guruh Talabalari Monitoringi & Bandlik Holati
+                        </h4>
+                        <p class="text-xs text-slate-400">Har bir talabaning hozirgi ish joyi, GPA ko'rsatkichi va sessiya holati</p>
+                    </div>
+                    <button onclick="fetchTutorDashboard()" class="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-rotate"></i> Yangilash
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm">
+                        <thead class="text-slate-400 uppercase text-[11px] font-semibold bg-slate-900/80 border-b border-white/10">
+                            <tr>
+                                <th class="p-3">#</th>
+                                <th class="p-3">Talaba F.I.Sh</th>
+                                <th class="p-3">Mutaxassislik & Bosqich</th>
+                                <th class="p-3">GPA</th>
+                                <th class="p-3">Hozirgi Ish Joyi</th>
+                                <th class="p-3">Sessiya Qulfi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tutor-students-tbody" class="divide-y divide-white/5 text-slate-200">
+                            <!-- JS orqali to'ldiriladi -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- TAB 4: URDU XAKATON TAHLILI VA REKTORAT HISOBOTI (HAKAMLAR UCHUN) -->
+        <!-- ========================================================================= -->
+        <section id="tab-analytics" class="tab-content hidden space-y-6">
+            
+            <!-- Eksport Tugmasi Bosh Banneri -->
+            <div class="glass-panel rounded-2xl p-6 bg-gradient-to-r from-blue-950/80 via-indigo-950/70 to-slate-900/90 border border-blue-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h3 class="font-display font-extrabold text-xl sm:text-2xl text-white">
+                        UrDU Talabalar Bandligi & Amaliyoti Rasmiy Hisoboti
+                    </h3>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                        Xakaton hakamlari va universitet rahbariyati uchun bazadagi barcha real natijalar (CSV / Excel formatida)
+                    </p>
+                </div>
+                <a href="/api/export/csv" class="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-file-excel text-base"></i>
+                    <span>To'liq Baza Hisobotini Yuklab Olish (CSV)</span>
+                </a>
+            </div>
+
+            <!-- Xakaton 3-Topshiriq: Urganchdagi Real Ish Beruvchilar Tahlili -->
+            <div class="glass-panel rounded-2xl p-6 space-y-4">
+                <div class="border-b border-white/10 pb-3">
+                    <h4 class="font-display font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                        <i class="fa-solid fa-handshake text-emerald-400"></i>
+                        Xakaton 3-topshiriq: Urganchdagi Real Ish Beruvchilar va Davlat Organlari Tahlili
+                    </h4>
+                    <p class="text-xs text-slate-400">Suhbat o'tkazilgan va platformaga ulangan tashkilotlar shartlari</p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm">
+                        <thead class="text-slate-400 uppercase text-[11px] font-semibold bg-slate-900/80 border-b border-white/10">
+                            <tr>
+                                <th class="p-3">Tashkilot</th>
+                                <th class="p-3">Lavozim</th>
+                                <th class="p-3">Ish Vaqti</th>
+                                <th class="p-3">To'lov / Imtiyoz</th>
+                                <th class="p-3">Talablar & Sharoitlar</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5 text-slate-300">
+                            <tr>
+                                <td class="p-3 font-semibold text-white">Mehmon uyi oilaviy hosteli</td>
+                                <td class="p-3 text-blue-400">Hostel boshqaruvchisi</td>
+                                <td class="p-3">08:00 – 18:00</td>
+                                <td class="p-3 text-emerald-400 font-bold">100,000 so'm/kun</td>
+                                <td class="p-3 text-xs">Faqat qizlar, 20-35 yosh, chaqqon va mas'uliyatli</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-white">"Bunyod" Gamburg 1-filiali</td>
+                                <td class="p-3 text-blue-400">Ofitsiant (2-smena)</td>
+                                <td class="p-3">14:00 – 21:00</td>
+                                <td class="p-3 text-emerald-400 font-bold">110,000 so'm/kun</td>
+                                <td class="p-3 text-xs">Darsdan keyingi smena, issiq ovqat ishxona hisobidan</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-white">"MITTIVOY" Mediapark Filiali</td>
+                                <td class="p-3 text-blue-400">Sotuvchi-konsultant</td>
+                                <td class="p-3">14:00 – 23:00</td>
+                                <td class="p-3 text-emerald-400 font-bold">3,500,000 – 4,500,000 so'm/oy</td>
+                                <td class="p-3 text-xs">Al-Xorazmiy ko'chasi, rasmiy mehnat daftarchasi</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-white">The United Team Logistika</td>
+                                <td class="p-3 text-blue-400">Logistika Dispetcheri</td>
+                                <td class="p-3">17:00 – 03:00</td>
+                                <td class="p-3 text-emerald-400 font-bold">$300 - $1,500/oy</td>
+                                <td class="p-3 text-xs">Urganch IT Park, 20 kunlik bepul trening, ingliz tili</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-white">HDP O'quv Markazi & Omon School</td>
+                                <td class="p-3 text-blue-400">Call Operator</td>
+                                <td class="p-3">14:00 – 19:30</td>
+                                <td class="p-3 text-emerald-400 font-bold">4,000,000+ so'm/oy</td>
+                                <td class="p-3 text-xs">UrDU ro'parasida, dars jadvaliga 100% moslashgan</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-white">"Inson" Ijtimoiy Himoya Markazi</td>
+                                <td class="p-3 text-purple-400">Kompleks Ijtimoiy Xodim</td>
+                                <td class="p-3">09:00 – 18:00</td>
+                                <td class="p-3 text-emerald-400 font-bold">5,440,000 so'm + 100% Kontrakt</td>
+                                <td class="p-3 text-xs">Rasmiy Davlat Fuqarolik Xizmati, staj, kontrakt granti</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- UrDU Talabalari So'rovnomasi Natijalari (Progress barlar) -->
+            <div class="glass-panel rounded-2xl p-6 space-y-4">
+                <div class="border-b border-white/10 pb-3">
+                    <h4 class="font-display font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-blue-400"></i>
+                        UrDU Talabalari O'rtasida O'tkazilgan So'rovnoma Tahlili (N=240 nafar talaba)
+                    </h4>
+                    <p class="text-xs text-slate-400">Talabalarning ishga bo'lgan real ehtiyojlari va to'siqlari</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    
+                    <div class="glass-card rounded-xl p-4 space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-300 font-semibold">Darsdan bo'sh vaqtda ishlash xohishi</span>
+                            <span class="font-bold text-emerald-400">86%</span>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden">
+                            <div class="bg-emerald-500 h-2.5 rounded-full" style="width: 86%"></div>
+                        </div>
+                        <p class="text-[11px] text-slate-400">206 nafar talaba yarim stavka ishlashga tayyor</p>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-4 space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-300 font-semibold">Dars jadvali to'qnashuvi muammosi</span>
+                            <span class="font-bold text-amber-400">72%</span>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden">
+                            <div class="bg-amber-500 h-2.5 rounded-full" style="width: 72%"></div>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Standart 09:00-18:00 ishlar darsga xalaqit beradi</p>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-4 space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-300 font-semibold">TTJ (22:00) va tungi smena cheklovi</span>
+                            <span class="font-bold text-rose-400">64%</span>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden">
+                            <div class="bg-rose-500 h-2.5 rounded-full" style="width: 64%"></div>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Yotoqxona qoidalari sababli kechki smenalar cheklangan</p>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- BIZNES MODEL VA MONETIZATSIYA (3 TA USTUN) -->
+            <div class="glass-panel rounded-2xl p-6 space-y-4">
+                <div class="border-b border-white/10 pb-3">
+                    <h4 class="font-display font-bold text-base sm:text-lg text-white flex items-center gap-2">
+                        <i class="fa-solid fa-coins text-amber-400"></i>
+                        Platforma Biznes Modeli (Monetizatsiya va Barqarorlik)
+                    </h4>
+                    <p class="text-xs text-slate-400">Loyihaning xususiy sektor va OTM hisobidan o'zini o'zi qoplash mexanizmi</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    
+                    <div class="glass-card rounded-2xl p-5 border-t-2 border-t-blue-500 space-y-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg font-bold">
+                            1
+                        </div>
+                        <h5 class="font-display font-bold text-base text-white">Pay-Per-Post (Tezkor Smenalar)</h5>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Kichik bizneslar (kafe, do'kon, hostel) shoshilinch part-time smenalar e'lon qilishi uchun har bir post uchun <b>25,000 so'm</b> yoki paket tariflar.
+                        </p>
+                        <div class="text-[11px] text-blue-400 font-semibold">
+                            Reja: Oyiga 150+ smena e'loni
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-5 border-t-2 border-t-emerald-500 space-y-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg font-bold">
+                            2
+                        </div>
+                        <h5 class="font-display font-bold text-base text-white">B2B Oylik HR-Obuna</h5>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Yirik korxonalar (Logistika, Banklar, O'quv markazlari) uchun oylik cheksiz vakansiya joylash, talabalar bazasiga to'g'ridan-to'g'ri kirish: <b>350,000 so'm/oy</b>.
+                        </p>
+                        <div class="text-[11px] text-emerald-400 font-semibold">
+                            Reja: 20 ta korporativ mijoz
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-5 border-t-2 border-t-purple-500 space-y-3">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-lg font-bold">
+                            3
+                        </div>
+                        <h5 class="font-display font-bold text-base text-white">Kontrakt Granti Skauting Komissiyasi</h5>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Iqtidorli talabaning kontraktini to'lab beruvchi korxonalarga eng munosib GPA 4.8+ nomzodlarni saralab berish xizmati uchun kontrakt summasining <b>3–5% miqdorida HR-komissiya</b>.
+                        </p>
+                        <div class="text-[11px] text-purple-400 font-semibold">
+                            Yuqori marjali B2B segment
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="glass-panel border-t border-white/5 py-6 px-4 text-center text-xs text-slate-400">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Kasbdosh © 2026 — Urganch Davlat Universiteti Xakaton Loyihasi</span>
+            </div>
+            <div class="flex items-center gap-4 text-slate-400">
+                <span>FastAPI + Aiogram 3.x + Leaflet</span>
+                <span>•</span>
+                <span>O'zbekiston Respublikasi Mehnat Kodeksi Himoyasida</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL 1: 1-KLIKDA ARIZA TOPSHIRISH -->
+    <!-- ========================================================================= -->
+    <div id="modal-apply" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm hidden p-4">
+        <div class="glass-panel rounded-2xl max-w-lg w-full p-6 border border-white/10 space-y-4 shadow-2xl relative">
+            
+            <button onclick="closeApplyModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="flex items-center gap-3 border-b border-white/10 pb-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </div>
+                <div>
+                    <h4 class="font-display font-bold text-lg text-white">Vakansiyaga Ariza Topshirish</h4>
+                    <p id="modal-apply-job-title" class="text-xs text-slate-300 font-medium">Lavozim nomi</p>
+                </div>
+            </div>
+
+            <!-- Xato / Ogohlantirish xabari -->
+            <div id="apply-error-msg" class="hidden p-3 rounded-xl bg-red-950/80 border border-red-500/50 text-red-200 text-xs"></div>
+
+            <form id="apply-form" onsubmit="handleApplySubmit(event)" class="space-y-3.5">
+                <input type="hidden" id="apply-job-id">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">F.I.Sh (To'liq ismingiz) *</label>
+                    <input type="text" id="apply-name" required placeholder="Masalan: Sardor Bobojonov" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Telefon Raqamingiz *</label>
+                        <input type="text" id="apply-phone" required placeholder="+998901234567" value="+998" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">OTM</label>
+                        <input type="text" id="apply-uni" readonly value="UrDU" class="w-full bg-slate-950/70 border border-white/5 rounded-xl px-3.5 py-2 text-sm text-slate-400">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Fakultet</label>
+                        <input type="text" id="apply-faculty" required value="Raqamli texnologiyalar" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Mutaxassislik</label>
+                        <input type="text" id="apply-major" required value="Dasturiy injiniring" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Bosqich (Kurs)</label>
+                        <select id="apply-course" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                            <option value="1">1-kurs</option>
+                            <option value="2" selected>2-kurs</option>
+                            <option value="3">3-kurs</option>
+                            <option value="4">4-kurs</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">GPA O'zlashtirish Bali</label>
+                        <input type="number" id="apply-gpa" step="0.1" min="2.0" max="5.0" value="4.6" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-submit-apply" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Arizani Yuborish</span>
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL 2: 14 KUNLIK BO'SHASH ARIZASI GENERATORI -->
+    <!-- ========================================================================= -->
+    <div id="modal-resignation" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm hidden p-4">
+        <div class="glass-panel rounded-2xl max-w-lg w-full p-6 border border-white/10 space-y-4 shadow-2xl relative">
+            
+            <button onclick="closeResignationModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="flex items-center gap-3 border-b border-white/10 pb-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-file-contract"></i>
+                </div>
+                <div>
+                    <h4 class="font-display font-bold text-lg text-white">14 Kunlik Bo'shash Arizasi Generatori</h4>
+                    <p class="text-xs text-slate-400">Mehnat Kodeksining 160-moddasi talablari asosida</p>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Korxona / Rahbar Nomi</label>
+                        <input type="text" id="gen-company" value="MChJ rahbari nomiga" oninput="updateResignationText()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Talaba F.I.Sh</label>
+                        <input type="text" id="gen-name" value="Sardor Bobojonov" oninput="updateResignationText()" class="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white">
+                    </div>
+                </div>
+
+                <!-- Matn maydoni -->
+                <div id="resignation-text" class="p-4 rounded-xl bg-slate-950 font-mono text-xs text-slate-300 whitespace-pre-wrap leading-relaxed border border-white/5 select-all">
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button onclick="copyResignationText()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-copy"></i>
+                        <span id="btn-copy-label">Matndan Nusxa Olish</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <!-- ========================================================================= -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 max-w-sm w-full p-4 rounded-xl shadow-2xl glass-panel border border-white/20 transform translate-y-24 opacity-0 transition-all duration-300 flex items-start gap-3 pointer-events-none">
+        <div id="toast-icon" class="text-xl mt-0.5"></div>
+        <div class="flex-grow">
+            <h5 id="toast-title" class="font-display font-bold text-sm text-white"></h5>
+            <p id="toast-body" class="text-xs text-slate-300 mt-0.5"></p>
+        </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- JAVASCRIPT KODI VA API INTEGRATSIYASI -->
+    <!-- ========================================================================= -->
+    <script>
+        let currentListingFilter = 'all';
+        let jobsMap = null;
+        let mapMarkers = [];
+
+        // Sahifa yuklanganda ishga tushadigan funksiyalar
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            fetchStats();
+            fetchJobs();
+            fetchTutorDashboard();
+            calculateTaxBenefit(12000000);
+            updateResignationText();
+
+            // Telegram WebApp kengaytirish va integratsiya
+            if (window.Telegram && window.Telegram.WebApp) {
+                const tg = window.Telegram.WebApp;
+                tg.ready();
+                tg.expand();
+                try {
+                    if (tg.setHeaderColor) tg.setHeaderColor('#070b13');
+                    if (tg.setBackgroundColor) tg.setBackgroundColor('#070b13');
+                    const tgUser = tg.initDataUnsafe?.user;
+                    if (tgUser) {
+                        const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
+                        if (fullName) {
+                            const nameInput = document.getElementById('apply-name');
+                            if (nameInput) nameInput.value = fullName;
+                            const genName = document.getElementById('gen-name');
+                            if (genName) genName.value = fullName;
+                        }
+                    }
+                } catch (e) {
+                    console.log("Telegram WebApp user fetch error:", e);
+                }
+            }
+        });
+
+        // Tablarni almashtirish
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/30');
+                btn.classList.add('text-slate-400');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400');
+                activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-600/30');
+            }
+
+            // Agar 1-tabga o'tilsa, xarita o'lchamini qayta hisoblash
+            if (tabId === 'tab-student' && jobsMap) {
+                setTimeout(() => { jobsMap.invalidateSize(); }, 200);
+            }
+        }
+
+        // ==========================================
+        // 1. STATISTIKA YUKLASH (/api/stats)
+        // ==========================================
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+                
+                document.getElementById('stat-open-jobs').innerText = data.open_jobs || data.total_jobs || 14;
+                document.getElementById('stat-internships').innerText = data.internships_count || 4;
+                document.getElementById('stat-grants').innerText = data.grants_count || 2;
+                document.getElementById('stat-employed').innerText = data.employed_students || 12;
+            } catch (err) {
+                console.error("Stats yuklashda xatolik:", err);
+            }
+        }
+
+        // ==========================================
+        // 2. LEAFLET XARITASI
+        // ==========================================
+        function initMap() {
+            // Urganch markaz koordinatasi
+            const urganchCoords = [41.5500, 60.6300];
+            jobsMap = L.map('jobs-map').setView(urganchCoords, 13);
+
+            // Dark Mode xarita plitkalari (CartoDB DarkMatter)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '© OpenStreetMap, CartoDB',
+                maxZoom: 18,
+            }).addTo(jobsMap);
+
+            // Urganch Davlat Universiteti (UrDU) markaziy binosiga maxsus belgi
+            const uniIcon = L.divIcon({
+                className: 'custom-uni-icon',
+                html: '<div style="background: #2563eb; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 2px solid white; box-shadow: 0 0 15px rgba(37,99,235,0.8);"><i class="fa-solid fa-graduation-cap"></i></div>',
+                iconSize: [34, 34],
+                iconAnchor: [17, 17]
+            });
+            L.marker([41.5420, 60.6310], { icon: uniIcon })
+                .addTo(jobsMap)
+                .bindPopup('<b style="color: #60a5fa;">Urganch Davlat Universiteti (UrDU)</b><br><span style="font-size: 12px; color: #94a3b8;">Bosh bino va Raqamli texnologiyalar fakulteti</span>');
+        }
+
+        function resetMapView() {
+            if (jobsMap) {
+                jobsMap.setView([41.5420, 60.6310], 14);
+            }
+        }
+
+        // ==========================================
+        // 3. VAKANSIYALARNI YUKLASH VA FILTERLASH (/api/jobs)
+        // ==========================================
+        function setListingFilter(type, btnElement) {
+            currentListingFilter = type;
+            document.querySelectorAll('.category-chip').forEach(c => {
+                c.classList.remove('bg-blue-600', 'text-white');
+                c.classList.add('bg-white/5', 'text-slate-300');
+            });
+            btnElement.classList.remove('bg-white/5', 'text-slate-300');
+            btnElement.classList.add('bg-blue-600', 'text-white');
+            fetchJobs();
+        }
+
+        async function fetchJobs() {
+            const major = document.getElementById('filter-major').value;
+            const course = document.getElementById('filter-course').value;
+            const gpa = document.getElementById('filter-gpa').value;
+            const dist = document.getElementById('filter-dist').value;
+
+            let url = `/api/jobs?major=${encodeURIComponent(major)}&course=${course}&gpa=${gpa}&max_distance_km=${dist}`;
+            if (currentListingFilter !== 'all') {
+                url += `&listing_type=${currentListingFilter}`;
+            }
+
+            const container = document.getElementById('jobs-container');
+            container.innerHTML = '<div class="col-span-2 text-center py-10 text-slate-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-blue-500"></i><p>Mos ishlar tahlil qilinmoqda...</p></div>';
+
+            try {
+                const res = await fetch(url);
+                const jobs = await res.json();
+
+                document.getElementById('jobs-count-badge').innerText = `${jobs.length} ta vakansiya`;
+                renderJobs(jobs);
+                updateMapMarkers(jobs);
+            } catch (err) {
+                console.error("Vakansiyalarni olishda xato:", err);
+                container.innerHTML = '<div class="col-span-2 text-center py-6 text-red-400">Ma\'lumotlarni yuklab bo\'lmadi. Serverni tekshiring.</div>';
+            }
+        }
+
+        function renderJobs(jobs) {
+            const container = document.getElementById('jobs-container');
+            if (!jobs || jobs.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-2 glass-card rounded-2xl p-8 text-center space-y-3">
+                        <div class="text-4xl text-amber-400"><i class="fa-solid fa-face-frown-open"></i></div>
+                        <h4 class="font-display font-bold text-white text-lg">Bu mezonlar bo'yicha ochiq vakansiya topilmadi</h4>
+                        <p class="text-xs text-slate-400 max-w-md mx-auto">Filtrdagi masofani oshiring yoki boshqa mutaxassislikni tanlab ko'ring.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = jobs.map(j => {
+                const score = j.match_score || 85;
+                const scoreColor = score >= 80 ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10' : (score >= 60 ? 'text-blue-400 border-blue-500/40 bg-blue-500/10' : 'text-amber-400 border-amber-500/40 bg-amber-500/10');
+                
+                let typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300">💰 Part-Time</span>';
+                if (j.listing_type === 'state_internship') {
+                    typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300">🏛 Davlat Amaliyoti</span>';
+                } else if (j.listing_type === 'tuition_grant_job' || j.tuition_coverage_percent > 0) {
+                    typeBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300">🎓 ${j.tuition_coverage_percent || 100}% Kontrakt Granti</span>`;
+                }
+
+                let payStr = j.pay_amount ? `${Number(j.pay_amount).toLocaleString()} so'm` : "Rasmiy Amaliyot Kundaligi";
+                if (j.tuition_coverage_percent > 0) {
+                    payStr = `🎓 Kontrakt: ${j.tuition_coverage_percent}% to'lanadi`;
+                }
+
+                const nightWarning = j.is_night_job ? '<span class="text-amber-400 text-[11px] font-semibold flex items-center gap-1 mt-1"><i class="fa-solid fa-moon"></i> Tungi smena (TTJ 22:00 ogohlantirishi)</span>' : '';
+
+                const reasonsHtml = (j.reasons || []).slice(0, 3).map(r => `
+                    <li class="flex items-start gap-1.5 text-[11px] text-slate-300">
+                        <span class="text-emerald-400 mt-0.5"><i class="fa-solid fa-check"></i></span>
+                        <span>${r}</span>
+                    </li>
+                `).join('');
+
+                return `
+                    <div class="glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                        <div class="space-y-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        ${typeBadge}
+                                        <span class="text-[11px] text-slate-400">${j.org_type === 'state_agency' ? 'Davlat organi' : 'Korxona'}</span>
+                                    </div>
+                                    <h4 class="font-display font-bold text-base text-white hover:text-blue-400 transition cursor-pointer">${j.title}</h4>
+                                    <p class="text-xs text-blue-300 font-medium">${j.company_name || 'Urganch korxonasi'}</p>
+                                </div>
+                                <div class="px-2.5 py-1.5 rounded-xl border ${scoreColor} text-center flex-shrink-0">
+                                    <span class="block text-xs font-display font-extrabold">${score}%</span>
+                                    <span class="text-[9px] uppercase tracking-wider font-bold">Moslik</span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 text-xs text-slate-300 pt-2 border-t border-white/5">
+                                <div><i class="fa-solid fa-clock text-slate-400 mr-1.5"></i> ${j.start_time || '14:00'} – ${j.end_time || '18:00'}</div>
+                                <div><i class="fa-solid fa-coins text-emerald-400 mr-1.5"></i> <span class="font-bold text-white">${payStr}</span></div>
+                                <div class="col-span-2 truncate"><i class="fa-solid fa-location-dot text-rose-400 mr-1.5"></i> ${j.address || 'Urganch shahri'}</div>
+                            </div>
+                            ${nightWarning}
+
+                            <!-- Oltin uchburchak moslik sabablari -->
+                            <div class="p-2.5 rounded-xl bg-slate-900/60 border border-white/5 space-y-1">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">💡 Nega sizga mos:</span>
+                                <ul class="space-y-1">${reasonsHtml}</ul>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-white/5 flex items-center justify-between gap-2">
+                            <span class="text-xs text-slate-400">O'rin: <b>${j.filled_count || 0} / ${j.slots_needed || 1}</b></span>
+                            <button onclick="openApplyModal(${j.id}, '${escapeQuotes(j.title)}', '${escapeQuotes(j.company_name)}')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition shadow-md shadow-blue-600/30 flex items-center gap-1.5">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>Ariza topshirish</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeQuotes(str) {
+            return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        function updateMapMarkers(jobs) {
+            if (!jobsMap) return;
+
+            // Eski belgilarni tozalash
+            mapMarkers.forEach(m => jobsMap.removeLayer(m));
+            mapMarkers = [];
+
+            jobs.forEach(j => {
+                const lat = j.lat || (41.5500 + (Math.random() - 0.5) * 0.03);
+                const lon = j.lon || (60.6300 + (Math.random() - 0.5) * 0.03);
+
+                const markerColor = j.listing_type === 'state_internship' ? '#10b981' : (j.tuition_coverage_percent > 0 ? '#8b5cf6' : '#3b82f6');
+                const markerIcon = L.divIcon({
+                    className: 'job-pin',
+                    html: `<div style="background: ${markerColor}; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; border: 2px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.5);"><i class="fa-solid fa-briefcase"></i></div>`,
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                });
+
+                const popupHtml = `
+                    <div style="font-family: 'Plus Jakarta Sans', sans-serif; padding: 4px;">
+                        <h4 style="font-weight: 700; font-size: 14px; margin-bottom: 2px; color: #fff;">${j.title}</h4>
+                        <div style="font-size: 12px; color: #60a5fa; margin-bottom: 6px;">${j.company_name || 'Urganch'}</div>
+                        <div style="font-size: 11px; color: #cbd5e1; margin-bottom: 8px;">
+                            ⏰ ${j.start_time || '14:00'} - ${j.end_time || '18:00'}<br>
+                            📍 ${j.address || 'Urganch sh.'}
+                        </div>
+                        <button onclick="openApplyModal(${j.id}, '${escapeQuotes(j.title)}', '${escapeQuotes(j.company_name)}')" style="width: 100%; background: #2563eb; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer;">
+                            1-Klikda Ariza Berish
+                        </button>
+                    </div>
+                `;
+
+                const marker = L.marker([lat, lon], { icon: markerIcon }).addTo(jobsMap).bindPopup(popupHtml);
+                mapMarkers.push(marker);
+            });
+        }
+
+        // ==========================================
+        // 4. ARIZA TOPSHIRISH MODALI VA POST /api/apply
+        // ==========================================
+        function openApplyModal(jobId, jobTitle, companyName) {
+            document.getElementById('apply-job-id').value = jobId;
+            document.getElementById('modal-apply-job-title').innerText = `${jobTitle} — ${companyName}`;
+            document.getElementById('apply-error-msg').classList.add('hidden');
+            document.getElementById('modal-apply').classList.remove('hidden');
+        }
+
+        function closeApplyModal() {
+            document.getElementById('modal-apply').classList.add('hidden');
+        }
+
+        async function handleApplySubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit-apply');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Yuborilmoqda...';
+
+            const tgId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || null;
+
+            const payload = {
+                job_id: parseInt(document.getElementById('apply-job-id').value),
+                full_name: document.getElementById('apply-name').value.trim(),
+                phone_number: document.getElementById('apply-phone').value.trim(),
+                university: document.getElementById('apply-uni').value,
+                faculty: document.getElementById('apply-faculty').value,
+                major: document.getElementById('apply-major').value,
+                course: parseInt(document.getElementById('apply-course').value),
+                gpa_score: parseFloat(document.getElementById('apply-gpa').value),
+                tg_id: tgId
+            };
+
+            try {
+                const res = await fetch('/api/apply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Arizani Yuborish</span>';
+
+                if (res.status === 403 || data.locked) {
+                    // Sessiya Qulfi faol bo'lsa ekranda katta qizil ogohlantirish
+                    const errMsg = document.getElementById('apply-error-msg');
+                    errMsg.innerHTML = `<b>⛔️ DIQQAT: OTM Tyutori Tomonidan Sessiya Qulfi Faollashtirilgan!</b><br>${data.message}`;
+                    errMsg.classList.remove('hidden');
+                    showToast('Sessiya Qulfi Faol!', 'Imtihonlar davrida yangi arizalar topshirish bloklangan.', 'error');
+                } else if (res.ok && data.ok) {
+                    closeApplyModal();
+                    showToast('Arizangiz qabul qilindi!', 'Tashkilot va Tyutoringizga Telegram orqali xabar yetkazildi.', 'success');
+                    fetchStats();
+                } else {
+                    alert(data.message || "Xatolik yuz berdi");
+                }
+            } catch (err) {
+                console.error("Apply error:", err);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Arizani Yuborish</span>';
+                alert("Server bilan aloqada xatolik yuz berdi.");
+            }
+        }
+
+        // ==========================================
+        // 5. YANGI VAKANSIYA YARATISH (POST /api/jobs)
+        // ==========================================
+        function toggleTuitionInput(listingType) {
+            const el = document.getElementById('tuition-wrapper');
+            if (listingType === 'tuition_grant_job') {
+                document.getElementById('job-tuition').value = 100;
+            }
+        }
+
+        async function handleCreateJob(e) {
+            e.preventDefault();
+            const payload = {
+                company_name: document.getElementById('job-company').value.trim(),
+                org_type: document.getElementById('job-org-type').value,
+                category: document.getElementById('job-category').value,
+                title: document.getElementById('job-title').value.trim(),
+                listing_type: document.getElementById('job-listing-type').value,
+                work_format: "offline_shift",
+                start_time: document.getElementById('job-start').value,
+                end_time: document.getElementById('job-end').value,
+                pay_amount: parseInt(document.getElementById('job-pay').value) || 0,
+                tuition_coverage_percent: parseInt(document.getElementById('job-tuition').value) || 0,
+                address: document.getElementById('job-address').value.trim(),
+                contact_phone: document.getElementById('job-phone').value.trim(),
+                slots_needed: parseInt(document.getElementById('job-slots').value) || 1,
+                target_majors: ["Barcha yo'nalishlar"]
+            };
+
+            try {
+                const res = await fetch('/api/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (res.ok && data.ok) {
+                    showToast('Vakansiya qo\'shildi!', 'Telegram botdagi barcha mos talabalarga va adminga push yuborildi!', 'success');
+                    document.getElementById('create-job-form').reset();
+                    fetchStats();
+                    fetchJobs();
+                    switchTab('tab-student');
+                } else {
+                    alert("Xatolik: " + (data.detail || "Vakansiyani qo'shib bo'lmadi"));
+                }
+            } catch (err) {
+                console.error("Job create error:", err);
+                alert("Server bilan aloqada xatolik.");
+            }
+        }
+
+        // ==========================================
+        // 6. TYUTOR BOSHQARUV PULTI & SESSIYA QULFI
+        // ==========================================
+        async function fetchTutorDashboard() {
+            try {
+                const res = await fetch('/api/tutor/dashboard');
+                const data = await res.json();
+
+                // Tyutor ma'lumoti
+                if (data.tutor) {
+                    document.getElementById('tutor-name').innerText = data.tutor.full_name || 'Alisher Boboyev';
+                    document.getElementById('tutor-faculty').innerText = `${data.tutor.faculty || 'UrDU'} | ${data.tutor.group_name || '211-guruh'}`;
+                }
+
+                // Sessiya qulfi indikatori
+                const badge = document.getElementById('tutor-lock-status-badge');
+                const globalBanner = document.getElementById('global-lock-banner');
+
+                if (data.is_locked) {
+                    badge.className = 'px-4 py-2.5 rounded-xl border border-red-500/40 bg-red-950/60 text-red-200 flex items-center gap-3';
+                    badge.innerHTML = `
+                        <div class="w-3 h-3 rounded-full bg-red-500 pulse-live"></div>
+                        <div>
+                            <div class="font-bold text-xs uppercase text-white">Sessiya Qulfi: FAOL (Bloklangan)</div>
+                            <div class="text-[11px] text-red-300">${data.exam_from} dan ${data.exam_to} gacha</div>
+                        </div>
+                    `;
+                    globalBanner.classList.remove('hidden');
+                } else {
+                    badge.className = 'px-4 py-2.5 rounded-xl border border-emerald-500/40 bg-emerald-950/60 text-emerald-200 flex items-center gap-3';
+                    badge.innerHTML = `
+                        <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+                        <div>
+                            <div class="font-bold text-xs uppercase text-white">Sessiya Qulfi: OCHIQ</div>
+                            <div class="text-[11px] text-emerald-300">Talabalar erkin ariza bera oladi</div>
+                        </div>
+                    `;
+                    globalBanner.classList.add('hidden');
+                }
+
+                // Talabalar jadvali
+                const tbody = document.getElementById('tutor-students-tbody');
+                if (data.students && data.students.length > 0) {
+                    tbody.innerHTML = data.students.map((s, idx) => {
+                        const jobBadge = s.active_job_title && s.active_job_title !== 'Ish qidirmoqda' ? 
+                            `<span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/20 text-emerald-300"><i class="fa-solid fa-briefcase"></i> ${s.active_job_title}</span>` :
+                            `<span class="px-2 py-0.5 rounded text-xs font-medium bg-slate-800 text-slate-400">🔍 Ish qidirmoqda</span>`;
+
+                        const lockStatus = s.is_locked ? 
+                            `<span class="text-rose-400 font-bold text-xs flex items-center gap-1"><i class="fa-solid fa-lock"></i> Qulfda</span>` :
+                            `<span class="text-emerald-400 font-medium text-xs flex items-center gap-1"><i class="fa-solid fa-lock-open"></i> Ochiq</span>`;
+
+                        return `
+                            <tr class="hover:bg-white/5 transition">
+                                <td class="p-3 text-slate-400 font-mono">${idx + 1}</td>
+                                <td class="p-3 font-bold text-white">${s.full_name}</td>
+                                <td class="p-3 text-slate-300 text-xs">${s.major} (${s.course_label || s.course + '-kurs'})</td>
+                                <td class="p-3"><span class="font-bold text-amber-400">⭐ ${s.gpa_score || '4.5'}</span></td>
+                                <td class="p-3">${jobBadge}</td>
+                                <td class="p-3">${lockStatus}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Guruhda talabalar mavjud emas</td></tr>';
+                }
+
+            } catch (err) {
+                console.error("Tutor dashboard error:", err);
+            }
+        }
+
+        async function setExamLock(action, days = 20) {
+            try {
+                const res = await fetch('/api/tutor/exam-lock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, days })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.ok) {
+                    showToast(
+                        action === 'lock' ? 'Sessiya qulfi yoqildi!' : 'Sessiya qulfi ochildi!',
+                        data.message,
+                        action === 'lock' ? 'warning' : 'success'
+                    );
+                    fetchTutorDashboard();
+                } else {
+                    alert(data.detail || "Amalni bajarib bo'lmadi.");
+                }
+            } catch (err) {
+                console.error("Lock error:", err);
+                alert("Server xatosi.");
+            }
+        }
+
+        // ==========================================
+        // 7. SOLIQ IMTIYOZ KALKULYATORI (Sol.K 378)
+        // ==========================================
+        function calculateTaxBenefit(contractAmount) {
+            const amount = parseInt(contractAmount);
+            document.getElementById('contract-label').innerText = amount.toLocaleString() + " so'm";
+
+            // Foyda solig'i (15%) tejalishi
+            const profitTaxSaved = Math.round(amount * 0.15);
+            // Jismoniy shaxs daromad solig'i (12%)
+            const incomeTaxSaved = Math.round(amount * 0.12);
+            const totalTaxSaved = profitTaxSaved + incomeTaxSaved;
+
+            document.getElementById('tax-saved-profit').innerText = profitTaxSaved.toLocaleString() + " so'm";
+            document.getElementById('tax-saved-income').innerText = incomeTaxSaved.toLocaleString() + " so'm";
+            document.getElementById('tax-saved-total').innerText = totalTaxSaved.toLocaleString() + " so'm";
+        }
+
+        // ==========================================
+        // 8. 14 KUNLIK BO'SHASH ARIZASI GENERATORI
+        // ==========================================
+        function openResignationModal() {
+            updateResignationText();
+            document.getElementById('modal-resignation').classList.remove('hidden');
+        }
+
+        function closeResignationModal() {
+            document.getElementById('modal-resignation').classList.add('hidden');
+        }
+
+        function updateResignationText() {
+            const comp = document.getElementById('gen-company').value.trim() || 'Korxona rahbari nomiga';
+            const name = document.getElementById('gen-name').value.trim() || 'Talaba';
+            
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            
+            const future = new Date();
+            future.setDate(today.getDate() + 14);
+            const futureStr = future.toISOString().split('T')[0];
+
+            const template = `"${comp}" rahbariyati nomiga
+Talaba: ${name}dan
+
+ARIZA
+
+O'zbekiston Respublikasi Mehnat kodeksining 160-moddasiga muvofiq, men bilan tuzilgan mehnat shartnomasini o'z xohishimga binoan qonunda belgilangan 14 kunlik ogohlantirish muddati tugagach, ${futureStr}-yildan boshlab bekor qilishingizni hamda men bilan to'liq yakuniy hisob-kitobni amalga oshirishingizni so'rayman.
+
+Sana: ${dateStr}
+Imzo: _______________ (${name})`;
+
+            document.getElementById('resignation-text').innerText = template;
+        }
+
+        function copyResignationText() {
+            const text = document.getElementById('resignation-text').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const label = document.getElementById('btn-copy-label');
+                label.innerText = 'Nusxa olindi!';
+                setTimeout(() => { label.innerText = 'Matndan Nusxa Olish'; }, 2000);
+                showToast('Nusxa olindi!', '14 kunlik ariza matni xotiraga ko\'chirildi.', 'success');
+            });
+        }
+
+        function openExamPolicyModal() {
+            openResignationModal();
+        }
+
+        // ==========================================
+        // 9. TOAST XABARLARI
+        // ==========================================
+        function showToast(title, body, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            
+            if (type === 'success') {
+                icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+            } else if (type === 'warning') {
+                icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-400"></i>';
+            } else {
+                icon.innerHTML = '<i class="fa-solid fa-circle-xmark text-rose-400"></i>';
+            }
+
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-body').innerText = body;
+
+            toast.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+            }, 4500);
+        }
+    </script>
+
+</body>
+</html>

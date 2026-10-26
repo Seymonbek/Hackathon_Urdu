@@ -1,3 +1,4 @@
+import html
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
@@ -29,45 +30,26 @@ async def show_internship_diary(event):
 
     student = await StudentsRepo.get_by_tg_id(user_id)
     if not student:
-        await msg.answer(t.MSG_PLEASE_REGISTER)
+        await msg.answer(t.MSG_PLEASE_REGISTER, parse_mode="HTML")
         return
 
     total_hours = await InternshipRepo.get_total_hours(student["id"])
     logs = await InternshipRepo.get_logs_by_student(student["id"])
 
-    if lang == "ru":
-        text = (
-            f"📜 **Электронный дневник государственной практики**\n\n"
-            f"🎓 **Студент:** {student.get('full_name')} ({student.get('major')})\n"
-            f"⏱ **Подтвержденные часы практики:** **{total_hours} часов**\n\n"
-            f"📋 **Последние записи:**\n"
-        )
-        empty_note = "Записи практики пока отсутствуют.\n"
-        btn_add = "✍️ Записать практику за сегодня"
-    elif lang == "en":
-        text = (
-            f"📜 **Official Internship Digital Logbook**\n\n"
-            f"🎓 **Student:** {student.get('full_name')} ({student.get('major')})\n"
-            f"⏱ **Verified Internship Hours:** **{total_hours} hours**\n\n"
-            f"📋 **Recent Log Entries:**\n"
-        )
-        empty_note = "No internship logs recorded yet.\n"
-        btn_add = "✍️ Log today's internship hours"
-    else:
-        text = (
-            f"📜 **Elektron Davlat Amaliyoti Kundaligi**\n\n"
-            f"🎓 **Talaba:** {student.get('full_name')} ({student.get('major')})\n"
-            f"⏱ **Tasdiqlangan amaliyot soatlari:** **{total_hours} soat**\n\n"
-            f"📋 **Oxirgi yozuvlar:**\n"
-        )
-        empty_note = "Hozircha amaliyot yozuvlari kiritilmagan.\n"
-        btn_add = "✍️ Bugungi amaliyotni yozish"
+    text = (
+        f"📜 <b>Elektron Davlat Amaliyoti Kundaligi</b>\n\n"
+        f"🎓 <b>Talaba:</b> {html.escape(str(student.get('full_name')))} ({html.escape(str(student.get('major')))})\n"
+        f"⏱ <b>Tasdiqlangan amaliyot soatlari:</b> <b>{total_hours} soat</b>\n\n"
+        f"📋 <b>Oxirgi yozuvlar:</b>\n"
+    )
+    empty_note = "Hozircha amaliyot yozuvlari kiritilmagan.\n"
+    btn_add = "✍️ Bugungi amaliyotni yozish"
 
     if logs:
         for l in logs[:5]:
             status = "✅ Tasdiqlangan" if l.get("verified_by_mentor") else "⏳ Kutilmoqda"
             score_text = f" (Baho: {l.get('mentor_score')}⭐)" if l.get("mentor_score") else ""
-            text += f"• {l.get('visit_date')} — {l.get('hours_spent')} soat | {status}{score_text}\n  Vazifa: _{l.get('tasks_performed')}_\n"
+            text += f"• {l.get('visit_date')} — {l.get('hours_spent')} soat | {status}{score_text}\n  Vazifa: <i>{html.escape(str(l.get('tasks_performed')))}</i>\n"
     else:
         text += empty_note
 
@@ -75,11 +57,14 @@ async def show_internship_diary(event):
         inline_keyboard=[
             [
                 InlineKeyboardButton(text=btn_add, callback_data="add_internship_log"),
+            ],
+            [
+                InlineKeyboardButton(text="🔙 Asosiy menyu", callback_data="close_carousel"),
             ]
         ]
     )
 
-    await msg.answer(text, reply_markup=kb, parse_mode="Markdown")
+    await msg.answer(text, reply_markup=kb, parse_mode="HTML")
 
 
 @router.callback_query(F.data == "add_internship_log")
@@ -88,7 +73,7 @@ async def start_add_log(call: CallbackQuery, state: FSMContext):
     student = await StudentsRepo.get_by_tg_id(call.from_user.id)
     active_app = await ApplicationsRepo.get_active_by_student(student["id"])
     if not active_app:
-        err_msg = "Sizda faol amaliyot mavjud emas." if lang == "uz" else ("У вас нет активной практики." if lang == "ru" else "You do not have an active internship.")
+        err_msg = "Sizda faol amaliyot mavjud emas."
         await call.answer(err_msg, show_alert=True)
         return
 
@@ -96,14 +81,12 @@ async def start_add_log(call: CallbackQuery, state: FSMContext):
     await state.set_state(InternshipLogStates.hours)
     await call.answer()
     
-    prompt = "Bugun amaliyotda necha soat bo'ldingiz? (Masalan: 3 yoki 4.5):" if lang == "uz" else ("Сколько часов практики вы провели сегодня? (Например: 3 или 4.5):" if lang == "ru" else "How many hours did you spend on internship today? (E.g.: 3 or 4.5):")
-    await call.message.answer(prompt)
+    prompt = "Bugun amaliyotda necha soat bo'ldingiz? (Masalan: 3 yoki 4.5):"
+    await call.message.answer(prompt, parse_mode="HTML")
 
 
 @router.message(InternshipLogStates.hours, F.text)
 async def process_log_hours(msg: Message, state: FSMContext):
-    data = await state.get_data()
-    lang = data.get("lang", "uz")
     try:
         hours = float(msg.text.replace(",", ".").strip())
     except ValueError:
@@ -111,15 +94,14 @@ async def process_log_hours(msg: Message, state: FSMContext):
     await state.update_data(hours=hours)
     await state.set_state(InternshipLogStates.tasks)
     
-    prompt = "Bugun qanday vazifalarni bajardingiz? Qisqacha yozing:\n*(Masalan: Sud majlisida kotibga da'vo arizalarini ro'yxatga olishda yordam berdim)*" if lang == "uz" else ("Какие задачи вы выполнили сегодня? Напишите кратко:" if lang == "ru" else "What tasks did you perform today? Write briefly:")
-    await msg.answer(prompt, parse_mode="Markdown")
+    prompt = "Bugun qanday vazifalarni bajardingiz? Qisqacha yozing:\n<i>(Masalan: Sud majlisida kotibga da'vo arizalarini ro'yxatga olishda yordam berdim)</i>"
+    await msg.answer(prompt, parse_mode="HTML")
 
 
 @router.message(InternshipLogStates.tasks, F.text)
 async def process_log_tasks(msg: Message, state: FSMContext):
     tasks = msg.text.strip()
     data = await state.get_data()
-    lang = data.get("lang", "uz")
     from datetime import date
 
     await InternshipRepo.add_log(
@@ -131,21 +113,8 @@ async def process_log_tasks(msg: Message, state: FSMContext):
     )
 
     await state.clear()
-    
-    if lang == "ru":
-        reply = (
-            "✅ **Дневник практики успешно сохранён!**\n"
-            "После подтверждения наставником часы будут зачислены и переданы в ваш университет."
-        )
-    elif lang == "en":
-        reply = (
-            "✅ **Log entry successfully recorded!**\n"
-            "Once confirmed by your mentor, hours will be credited to your university record."
-        )
-    else:
-        reply = (
-            "✅ **Kundalik muvaffaqiyatli saqlandi!**\n"
-            "Tashkilot mas'uli (ustoz) tasdiqlashi bilan amaliyot soatlaringizga qo'shiladi va OTMga yuboriladi."
-        )
-
-    await msg.answer(reply, parse_mode="Markdown")
+    reply = (
+        "✅ <b>Kundalik muvaffaqiyatli saqlandi!</b>\n"
+        "Tashkilot mas'uli (ustoz) tasdiqlashi bilan amaliyot soatlaringizga qo'shiladi va OTMga yuboriladi."
+    )
+    await msg.answer(reply, parse_mode="HTML")

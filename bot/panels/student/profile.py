@@ -211,7 +211,13 @@ async def prompt_exam_mode(event, state: FSMContext):
                 f"Imtihonlar davrida talabaning o'zlashtirishini ta'minlash maqsadida yangi ishlarga ariza topshirish va yangi ish qabul qilish to'liq bloklangan (pauza rejimi).\n\n"
                 f"ℹ️ *Sessiya qulfini faqat OTM tyutori ochishi yoki muddatini o'zgartirishi mumkin.*"
             )
-        await msg.answer(info_txt, parse_mode="Markdown")
+        await msg.answer(
+            info_txt,
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(text="⬅️ Profilga qaytish", callback_data="profile_back_to_main")
+            ]]),
+            parse_mode="Markdown"
+        )
     else:
         if lang == "ru":
             info_txt = (
@@ -231,7 +237,13 @@ async def prompt_exam_mode(event, state: FSMContext):
                 "Hozirda sizda faol imtihon cheklovi yo'q. Qulay ishlarni qidirishingiz va arizalar topshirishingiz mumkin.\n\n"
                 "ℹ️ *Eslatma: Yangi qoidalarga ko'ra, sessiya va imtihonlar muddati faqat OTM tyutori tomonidan belgilanadi va boshqariladi.*"
             )
-        await msg.answer(info_txt, parse_mode="Markdown")
+        await msg.answer(
+            info_txt,
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(text="⬅️ Profilga qaytish", callback_data="profile_back_to_main")
+            ]]),
+            parse_mode="Markdown"
+        )
 
 
 # ==========================================
@@ -302,7 +314,13 @@ async def show_resignation_template(event):
             f"💡 *Ushbu tayyor ariza matnidan nusxa olib, ish beruvchingizga topshirishingiz mumkin.*"
         )
 
-    await msg.answer(template, parse_mode="Markdown")
+    await msg.answer(
+        template,
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="⬅️ Profilga qaytish", callback_data="profile_back_to_main")
+        ]]),
+        parse_mode="Markdown"
+    )
 
 
 # ==========================================

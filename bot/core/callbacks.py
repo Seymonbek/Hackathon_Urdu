@@ -8,6 +8,14 @@ class StudentJobAction(CallbackData, prefix="st_job"):
     job_id: int
 
 
+class JobCarouselCallback(CallbackData, prefix="jcar"):
+    section: str  # jobs, internships, grants, all, search
+    page: int
+    action: str  # nav, view, apply, back, menu
+    job_id: int
+
+
+
 class StudentPagination(CallbackData, prefix="st_page"):
     section: str  # feed, my_apps, saved, grants
     page: int
@@ -32,6 +40,17 @@ class EmployerJobAction(CallbackData, prefix="emp_job"):
 class EmployerAppAction(CallbackData, prefix="emp_app"):
     action: str  # accept, reject, backup, no_show, finish
     app_id: int
+
+
+class EmployerInboxNav(CallbackData, prefix="emp_inb"):
+    page: int
+    action: str  # nav, noop
+
+
+class EmployerActiveNav(CallbackData, prefix="emp_act"):
+    page: int
+    action: str  # nav, noop
+
 
 
 class EmployerPagination(CallbackData, prefix="emp_page"):

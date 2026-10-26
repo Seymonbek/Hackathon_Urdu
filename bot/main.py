@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import sys
+import uvicorn
 from aiogram import Bot, Dispatcher, Router, F
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -25,6 +26,8 @@ from bot.panels.student.router import router as student_router
 from bot.panels.employer.router import router as employer_router
 from bot.panels.admin.router import router as admin_router
 from bot.panels.tutor.router import tutor_router
+from bot.web.api import app
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -234,15 +237,38 @@ async def process_role_switch(call: CallbackQuery):
 
 
 async def main():
-    logger.info("Kasbdosh bot tizimi ishga tushirilmoqda...")
+    logger.info("Kasbdosh tizimi ishga tushirilmoqda (Bot + Veb Platforma)...")
 
-    # Ma'lumotlar bazasiga ulanish
+    # 1. Ma'lumotlar bazasiga ulanish
     await db.connect()
 
-    # Demo ma'lumotlarni kiritish
+    # 2. Demo ma'lumotlarni kiritish
     await seed_initial_data()
 
-    bot = Bot(token=settings.BOT_TOKEN)
+    # 3. Bot obyektini yaratish
+    bot = None
+    try:
+        if settings.BOT_TOKEN:
+            bot = Bot(token=settings.BOT_TOKEN)
+    except Exception as e:
+        logger.warning(f"Aiogram Bot yaratishda xatolik: {e}")
+
+    # 4. FastAPI ilovasiga Aiogram Bot obyektini biriktirish
+    app.state.bot = bot
+
+    # 5. Uvicorn Veb-Serverni fonda ishga tushirish (asyncio.create_task)
+    web_config = uvicorn.Config(
+        app=app,
+        host="0.0.0.0",
+        port=8000,
+        log_level="info",
+        access_log=False,
+    )
+    server = uvicorn.Server(web_config)
+    web_task = asyncio.create_task(server.serve())
+    logger.info("🌐 Zamonaviy Veb-Platforma ishga tushdi: http://localhost:8000")
+
+    # 6. Aiogram Dispatcher va Routerlarni sozlash
     dp = Dispatcher(storage=MemoryStorage())
 
     # Middlewarelarni ro'yxatdan o'tkazish
@@ -258,16 +284,32 @@ async def main():
     dp.include_router(admin_router)
     dp.include_router(tutor_router)
 
+    # 7. Telegram Bot Polling (Token xato bo'lsa ham veb-server to'xtamaydi)
     try:
-        logger.info(f"Bot muvaffaqiyatli ishga tushdi: @{settings.BOT_NAME}")
-        # Avvalgi kutilayotgan eskirgan xabarlarni tozalash (drop pending updates)
-        await bot.delete_webhook(drop_pending_updates=True)
-        await dp.start_polling(bot)
+        if bot and settings.BOT_TOKEN and settings.BOT_TOKEN != "DUMMY_BOT_TOKEN_REPLACE_ME":
+            logger.info(f"Bot muvaffaqiyatli ishga tushdi: @{settings.BOT_NAME}")
+            # Eskirgan xabarlarni tozalash
+            await bot.delete_webhook(drop_pending_updates=True)
+            await dp.start_polling(bot)
+        else:
+            logger.warning("⚠️ Haqiqiy BOT_TOKEN topilmadi yoki test rejimida. Telegram polling o'tkazib yuborildi.")
+            logger.info("🌐 Veb-server mustaqil rejimda to'liq ishlamoqda: http://localhost:8000")
+            await web_task
     except Exception as e:
-        logger.error(f"Bot ishlashida xatolik yuz berdi: {e}")
+        logger.error(f"Telegram Bot ishlashida xatolik: {e}")
+        logger.info("🌐 Veb-server to'xtatilmasdan fonda ishlashda davom etmoqda: http://localhost:8000")
+        await web_task
     finally:
+        server.should_exit = True
+        if not web_task.done():
+            web_task.cancel()
+        if bot and bot.session:
+            try:
+                await bot.session.close()
+            except Exception:
+                pass
         await db.disconnect()
-        await bot.session.close()
+
 
 
 if __name__ == "__main__":
