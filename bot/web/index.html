@@ -239,6 +239,27 @@
 
             </div>
 
+            <!-- Telegram Botga Ulanish Bosh Banneri -->
+            <div class="glass-panel rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-blue-900/50 via-indigo-900/40 to-slate-900/80 border border-blue-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-2xl flex-shrink-0 shadow-inner">
+                        <i class="fa-brands fa-telegram"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-display font-bold text-base text-white flex items-center gap-2">
+                            UrDU Talabalarining Rasmiy Telegram Boti: <a href="https://t.me/imkon_ish_bot" target="_blank" class="text-blue-400 hover:underline">@imkon_ish_bot</a>
+                        </h4>
+                        <p class="text-xs text-slate-300 mt-0.5">
+                            Dars jadvalingiz, GPA va yashash joyingizga mos yangi vakansiyalar haqida tezkor push-bildirishnomalarni Telegramda oling!
+                        </p>
+                    </div>
+                </div>
+                <a href="https://t.me/imkon_ish_bot" target="_blank" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2 whitespace-nowrap flex-shrink-0">
+                    <i class="fa-brands fa-telegram text-base"></i>
+                    <span>Botga Kirish (@imkon_ish_bot)</span>
+                </a>
+            </div>
+
             <!-- Sessiya Qulfi Ogohlantirish Paneli (Agar tyutor qulf qo'ygan bo'lsa) -->
             <div id="global-lock-banner" class="hidden rounded-2xl p-5 bg-gradient-to-r from-red-950/80 to-rose-900/60 border border-red-500/40 text-red-200">
                 <div class="flex items-start gap-4">
@@ -404,10 +425,15 @@
                 <!-- Chap tomon: Yangi Vakansiya Joylash Formasi (7 ustun) -->
                 <div class="lg:col-span-7 glass-panel rounded-2xl p-6 space-y-5">
                     <div class="border-b border-white/10 pb-4">
-                        <h3 class="font-display font-bold text-xl text-white flex items-center gap-2">
-                            <i class="fa-solid fa-circle-plus text-blue-400"></i>
-                            Yangi Vakansiya, Amaliyot yoki Kontrakt Granti Joylash
-                        </h3>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <h3 class="font-display font-bold text-xl text-white flex items-center gap-2">
+                                <i class="fa-solid fa-circle-plus text-blue-400"></i>
+                                Yangi Vakansiya, Amaliyot yoki Kontrakt Granti Joylash
+                            </h3>
+                            <a href="https://t.me/imkon_ish_bot" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1.5 self-start sm:self-auto bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/20">
+                                <i class="fa-brands fa-telegram"></i> @imkon_ish_bot
+                            </a>
+                        </div>
                         <p class="text-xs text-slate-400 mt-1">E'lon joylangach, darhol barcha mos UrDU talabalariga Telegram bot orqali push-bildirishnoma boradi.</p>
                     </div>
 
@@ -612,8 +638,9 @@
                     </button>
                 </div>
 
-                <p class="text-xs text-slate-400 italic">
-                    ℹ️ Qulf yoqilganda guruhdagi barcha talabalarning Telegram botiga zudlik bilan rasmiy ogohlantirish boradi va yangi ishlarga ariza topshirish to'liq bloklanadi.
+                <p class="text-xs text-slate-400 italic flex flex-wrap items-center gap-1.5">
+                    <span>ℹ️ Qulf yoqilganda guruhdagi barcha talabalarning Telegram botiga zudlik bilan rasmiy ogohlantirish boradi va yangi ishlarga ariza topshirish to'liq bloklanadi.</span>
+                    <a href="https://t.me/imkon_ish_bot" target="_blank" class="text-blue-400 hover:underline font-semibold">@imkon_ish_bot orqali tekshirish <i class="fa-brands fa-telegram"></i></a>
                 </p>
 
             </div>
@@ -669,10 +696,16 @@
                         Xakaton hakamlari va universitet rahbariyati uchun bazadagi barcha real natijalar (CSV / Excel formatida)
                     </p>
                 </div>
-                <a href="/api/export/csv" class="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2 whitespace-nowrap">
-                    <i class="fa-solid fa-file-excel text-base"></i>
-                    <span>To'liq Baza Hisobotini Yuklab Olish (CSV)</span>
-                </a>
+                <div class="flex flex-wrap items-center gap-3">
+                    <a href="https://t.me/imkon_ish_bot" target="_blank" class="px-4 py-3 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 border border-blue-500/30 font-bold text-sm transition flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-brands fa-telegram text-base"></i>
+                        <span>Telegram Bot (@imkon_ish_bot)</span>
+                    </a>
+                    <a href="/api/export/csv" class="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-file-excel text-base"></i>
+                        <span>To'liq Baza Hisobotini Yuklab Olish (CSV)</span>
+                    </a>
+                </div>
             </div>
 
             <!-- Xakaton 3-Topshiriq: Urganchdagi Real Ish Beruvchilar Tahlili -->
@@ -858,6 +891,10 @@
                 <span>Imkon © 2026 — Urganch Davlat Universiteti Xakaton Loyihasi</span>
             </div>
             <div class="flex items-center gap-4 text-slate-400">
+                <a href="https://t.me/imkon_ish_bot" target="_blank" class="hover:text-blue-400 transition flex items-center gap-1.5 text-blue-300 font-semibold">
+                    <i class="fa-brands fa-telegram text-base"></i> @imkon_ish_bot
+                </a>
+                <span>•</span>
                 <span>FastAPI + Aiogram 3.x + Leaflet</span>
                 <span>•</span>
                 <span>O'zbekiston Respublikasi Mehnat Kodeksi Himoyasida</span>
@@ -938,6 +975,12 @@
                     <i class="fa-solid fa-check"></i>
                     <span>Arizani Yuborish</span>
                 </button>
+
+                <div class="text-center pt-1">
+                    <a href="https://t.me/imkon_ish_bot" target="_blank" class="text-[11px] text-blue-400 hover:text-blue-300 inline-flex items-center gap-1.5 transition">
+                        <i class="fa-brands fa-telegram text-sm"></i> Arizangiz holatini @imkon_ish_bot orqali ham kuzating
+                    </a>
+                </div>
             </form>
 
         </div>
