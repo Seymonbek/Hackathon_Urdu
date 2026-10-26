@@ -1,0 +1,30 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+
+# Environment Variables & Secrets (Prevents GitHub token auto-revocation)
+.env
+*.local.env
+
+# SQLite databases & temp WAL logs
+*.db-wal
+*.db-shm
+*.db-journal
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+.system_generated/

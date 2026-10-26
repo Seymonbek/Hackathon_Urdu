@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMKON — Talabalar Bandligi va Amaliyoti Platformasi (Hakamlar Paneli)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.75);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.4);
+            --accent: #10b981;
+            --accent-glow: rgba(16, 185, 129, 0.3);
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 40%);
+            padding-bottom: 60px;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(10, 14, 23, 0.85);
+        }
+
+        .header-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-badge {
+            background: linear-gradient(135deg, #3b82f6, #10b981);
+            color: #fff;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .logo-text h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-live {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .header-links {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-tg {
+            background: #2563eb;
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-tg:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+        }
+
+        .main-container {
+            max-width: 1300px;
+            margin: 32px auto;
+            padding: 0 24px;
+        }
+
+        /* STATS BANNER */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            backdrop-filter: blur(8px);
+        }
+
+        .metric-card .num {
+            font-family: 'Outfit', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            color: #60a5fa;
+            margin-bottom: 4px;
+        }
+
+        .metric-card .label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* TABS */
+        .tab-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn.active {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* CONTENT PANELS */
+        .panel {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* GRID LAYOUTS */
+        .cabinet-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .cabinet-grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 24px;
+        }
+
+        .card h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 19px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ALERTS */
+        .alert-box {
+            padding: 14px 18px;
+            border-radius: var(--radius-md);
+            margin-bottom: 16px;
+            font-size: 13.5px;
+            line-height: 1.5;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #fbbf24;
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            color: #93c5fd;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #6ee7b7;
+        }
+
+        /* VACANCY CARD */
+        .job-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            margin-bottom: 14px;
+            transition: all 0.2s;
+        }
+
+        .job-item:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .job-item .title {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .job-item .score-tag {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .job-item .near-tag {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .job-item .meta {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 10px;
+        }
+
+        .btn-apply {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-apply:hover {
+            background: #1d4ed8;
+        }
+
+        /* ROADMAP */
+        .roadmap-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .roadmap-grid { grid-template-columns: 1fr; }
+        }
+
+        .stage-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            position: relative;
+        }
+
+        .stage-card.current {
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.15);
+        }
+
+        .stage-badge {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .badge-p0 { background: #065f46; color: #6ee7b7; }
+        .badge-p1 { background: #1e3a8a; color: #93c5fd; }
+        .badge-p2 { background: #374151; color: #d1d5db; }
+
+        .stage-card h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            margin-bottom: 14px;
+        }
+
+        .stage-card ul {
+            list-style: none;
+        }
+
+        .stage-card li {
+            font-size: 13.5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            color: #d1d5db;
+        }
+
+        .stage-card li::before {
+            content: "•";
+            color: #3b82f6;
+            font-weight: bold;
+        }
+
+        /* ARIZA SHABLONI GENERATOR */
+        .template-box {
+            background: #1e293b;
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            white-space: pre-wrap;
+            position: relative;
+        }
+
+        .btn-copy {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .btn-copy:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-container">
+            <div class="logo-wrap">
+                <div class="logo-badge">I</div>
+                <div class="logo-text">
+                    <h1>IMKON <span class="badge-live">Musobaqa Versiyasi (P0)</span></h1>
+                </div>
+            </div>
+            <div class="header-links">
+                <a href="https://t.me/imkon_ish_bot" target="_blank" class="btn-tg">
+                    🤖 Telegram Bot: @imkon_ish_bot
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+
+        <!-- REAL RAQAMLAR / METRIKALAR -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="num" id="stat-students">42+</div>
+                <div class="label">Ro'yxatdan o'tgan talabalar</div>
+            </div>
+            <div class="metric-card">
+                <div class="num" id="stat-jobs">14</div>
+                <div class="label">Ochiq vakansiya & amaliyotlar</div>
+            </div>
+            <div class="metric-card">
+                <div class="num">15 ta</div>
+                <div class="label">So'rovnoma o'tkazildi (Validatsiya)</div>
+            </div>
+            <div class="metric-card">
+                <div class="num">5 ta</div>
+                <div class="label">Ish beruvchilar bilan suhbat</div>
+            </div>
+            <div class="metric-card">
+                <div class="num" style="color: #34d399;">100%</div>
+                <div class="label">Mehnat kodeksi 411/160 himoyasi</div>
+            </div>
+        </div>
+
+        <!-- TAB BUTTONS -->
+        <div class="tab-controls">
+            <button class="tab-btn active" onclick="switchTab('kabinetlar')">🏛 Ikkita Kabinet (Talaba & Ish beruvchi)</button>
+            <button class="tab-btn" onclick="switchTab('deyarli-mos')">⚡ "Deyarli mos" ishlar & Xabar berish</button>
+            <button class="tab-btn" onclick="switchTab('pauza-ariza')">📝 14 Kunlik Ariza & Sessiya Pauzasi</button>
+            <button class="tab-btn" onclick="switchTab('yosh-tungi')">🌙 Tungi Smena & Yosh Himoyasi</button>
+            <button class="tab-btn" onclick="switchTab('roadmap')">🗺 3 Bosqichli Yo'l Xaritasi (Roadmap)</button>
+        </div>
+
+        <!-- 1. IKKITA KABINET -->
+        <div id="kabinetlar" class="panel active">
+            <div class="cabinet-grid">
+                
+                <!-- TALABA KABINETI -->
+                <div class="card">
+                    <h3>🎓 Talaba Kabineti</h3>
+                    <div style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 16px;">
+                        Profil: <b>Anvar Karimov</b> (UrDU, 3-kurs, Dasturiy injiniring, Yosh: 20)
+                    </div>
+
+                    <div class="alert-box alert-info">
+                        ℹ️ <b>Sessiya rejimi:</b> Faol emas. Yangi ish bildirishnomalari qabul qilinmoqda.
+                    </div>
+
+                    <h4 style="font-size: 15px; margin-bottom: 12px; color: #93c5fd;">Tavsiya qilinayotgan mos ishlar:</h4>
+
+                    <div class="job-item">
+                        <div class="title">
+                            <span>IT Support & Web Dasturchi</span>
+                            <span class="score-tag">92% Moslik</span>
+                        </div>
+                        <div class="meta">
+                            <span>🏢 IT Park Urganch</span>
+                            <span>⏰ 14:30 – 18:00</span>
+                            <span>💰 180,000 so'm/smena</span>
+                            <span>📍 1.2 km (Piyoda)</span>
+                        </div>
+                        <button class="btn-apply" onclick="alert('Ariza yuborildi!')">Ariza berish</button>
+                    </div>
+
+                    <div class="job-item">
+                        <div class="title">
+                            <span>Sud majlisi kotibi yordamchisi</span>
+                            <span class="score-tag">88% Moslik</span>
+                        </div>
+                        <div class="meta">
+                            <span>🏛 Fuqarolik Sudi</span>
+                            <span>⏰ 14:00 – 18:00</span>
+                            <span>📄 Rasmiy Davlat Amaliyoti</span>
+                            <span>📍 2.1 km</span>
+                        </div>
+                        <button class="btn-apply" onclick="alert('Davlat amaliyotiga ariza topshirildi!')">Amaliyotga yozilish</button>
+                    </div>
+                </div>
+
+                <!-- ISH BERUVCHI KABINETI -->
+                <div class="card">
+                    <h3>🏢 Ish Beruvchi Kabineti</h3>
+                    <div style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 16px;">
+                        Tashkilot: <b>"Xorazm IT Hub"</b> (Urganch shahri)
+                    </div>
+
+                    <div class="alert-box alert-success">
+                        ✅ <b>Ochiq vakansiyalar:</b> 2 ta faol | <b>Kelgan arizalar:</b> 3 ta kutilmoqda
+                    </div>
+
+                    <h4 style="font-size: 15px; margin-bottom: 12px; color: #6ee7b7;">Kelib tushgan yangi arizalar:</h4>
+
+                    <div class="job-item">
+                        <div class="title">
+                            <span>Nomzod: Jamshid Aliyev</span>
+                            <span class="score-tag">90% Mos</span>
+                        </div>
+                        <div class="meta">
+                            <span>🎓 UrDU, Dasturiy injiniring (3-kurs)</span>
+                            <span>⭐ GPA: 4.8</span>
+                            <span>🛡 Ishonch: 100/100</span>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-apply" style="background: #10b981;" onclick="alert('Nomzod qabul qilindi!')">✅ Qabul qilish</button>
+                            <button class="btn-apply" style="background: #f59e0b;" onclick="alert('Nomzod zaxiraga olindi!')">⏳ Zaxira</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);">
+                        <button class="btn-apply" style="width: 100%; padding: 12px;" onclick="alert('Vakansiya joylash formasi ochilmoqda...')">➕ Yangi Vakansiya / Kvota Joylash</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 2. DEYARLI MOS ISHLAR -->
+        <div id="deyarli-mos" class="panel">
+            <div class="card">
+                <h3>⚡ "Deyarli mos" Ishlar mexanizmi va "Xabar bering" tugmasi</h3>
+                <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 18px;">
+                    Agar talabaning dars jadvali yoki masofasiga 100% to'g'ri keladigan ish hozircha bo'lmasa, talabaga 0 natija ko'rsatmasdan, 
+                    kunlardan biri yoki yo'nalishi qisman mos keladigan takliflar <b>"Deyarli mos"</b> yorlig'i bilan taqdim etiladi.
+                </p>
+
+                <div class="alert-box alert-warning">
+                    🔔 <b>Hozircha 100% to'liq mos ish topilmadi.</b> Siz uchun kunlari va shartlari qisman to'g'ri keladigan tavsiyalar:
+                </div>
+
+                <div class="job-item">
+                    <div class="title">
+                        <span>Grafik Dizayner & SMM yordamchisi</span>
+                        <span class="near-tag">⚡ Deyarli mos (75%)</span>
+                    </div>
+                    <div class="meta">
+                        <span>🏢 Media Studio</span>
+                        <span>⏰ 16:00 – 20:00 (Seshanba/Payshanba)</span>
+                        <span>💰 150,000 so'm</span>
+                        <span>💡 <i>Izoh: Darsingiz soat 16:15 da tugashi sababli 15 daqiqa bufer farqi bor.</i></span>
+                    </div>
+                    <button class="btn-apply" onclick="alert('Ariza yuborildi!')">Ariza berish</button>
+                </div>
+
+                <div style="text-align: center; margin-top: 24px; padding: 20px; background: rgba(59, 130, 246, 0.08); border-radius: var(--radius-md);">
+                    <h4 style="font-size: 16px; margin-bottom: 8px;">Mos ish chiqishi bilan darhol bilmoqchimisiz?</h4>
+                    <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 14px;">"Oltin Uchburchak" algoritmi yangi vakansiya tushishi bilan sizga Telegramda shaxsiy push yuboradi.</p>
+                    <button class="btn-apply" style="padding: 10px 24px;" onclick="alert('Bildirishnomalarga muvaffaqiyatli obuna bo\'ldingiz!')">🔔 Mos ish chiqsa xabar bering</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. PAUZA VA 14 KUNLIK ARIZA -->
+        <div id="pauza-ariza" class="panel">
+            <div class="cabinet-grid">
+                
+                <div class="card">
+                    <h3>📚 Sessiya Rejimi (Pauza)</h3>
+                    <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">
+                        Talaba imtihon davrida o'qishdan chalg'imasligi uchun barcha yangi ish takliflari va qo'ng'iroqlarni vaqtincha to'xtatib turishi mumkin.
+                    </p>
+                    <div class="alert-box alert-info">
+                        🗓 <b>Joriy holat:</b> Sessiya 2026-06-01 dan 2026-06-25 gacha belgilangan. Tizim xabarnomalarni avtomatik pauzaga oladi.
+                    </div>
+                    <button class="btn-apply" style="background: #374151;" onclick="alert('Sessiya pauzasi yoqildi/o\'chirildi!')">⏸ Pauzani yoqish / o'chirish</button>
+                </div>
+
+                <div class="card">
+                    <h3>📄 14 Kunlik Ishdan Bo'shash Arizasi Generator</h3>
+                    <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 12px;">
+                        O'zbekiston Respublikasi Mehnat kodeksining 160-moddasi talablariga asosan xodim ishdan bo'shash haqida ish beruvchini 14 kun oldin yozma ogohlantirishi lozim.
+                    </p>
+                    
+                    <div class="template-box" id="template-text">
+"Xorazm IT Hub" rahbari nomiga
+Talaba: Anvar Karimovdan
+
+ARIZA
+
+O'zbekiston Respublikasi Mehnat kodeksining 160-moddasiga asosan, men bilan tuzilgan mehnat shartnomasini qonunda belgilangan 14 kunlik ogohlantirish muddati tugagach, 2026-yil 10-noyabrdan bekor qilishingizni va men bilan to'liq hisob-kitob qilishingizni so'rayman.
+
+Sana: 2026-yil 26-oktabr
+Imzo: _________________ (Anvar Karimov)
+                    </div>
+                    <button class="btn-apply" style="margin-top: 14px;" onclick="copyTemplate()">📋 Matndan nusxa olish</button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 4. YOSH HIMOYASI VA TUNGI SMENA -->
+        <div id="yosh-tungi" class="panel">
+            <div class="card">
+                <h3>🌙 Tungi Smena & 18+ Yosh Himoyasi Qoidalari</h3>
+                
+                <div class="alert-box alert-warning">
+                    ⚠️ <b>Tungi Smena va TTJ Ogohlantirishi:</b><br>
+                    Talabalar turar joyi (TTJ) qoidalariga ko'ra soat 22:00 dan keyin bino eshiklari yopiladi. Shu sababli, tungi smenaga ariza berishdan oldin talaba bu smenani OTM ma'muriyati yoki TTJ komendanti bilan rasman kelishib olishi talab etiladi.
+                </div>
+
+                <div class="alert-box alert-info">
+                    🛡 <b>18 yoshdan kichiklar uchun Mehnat Kodeksi (411-modda) himoyasi:</b><br>
+                    Platformada 18 yoshga to'lmagan talabalarga tungi ishlar (22:00 dan keyin) va spirtli/tamaki mahsulotlari bilan bog'liq 18+ vakansiyalar algoritmlar orqali avtomatik yashiriladi va ularga ariza topshirish bloklanadi.
+                </div>
+
+                <h4 style="font-size: 16px; margin: 18px 0 10px 0;">Algoritm qanday ishlaydi?</h4>
+                <ul style="font-size: 14px; color: var(--text-muted); line-height: 1.8; margin-left: 20px;">
+                    <li>Talaba yoshi 18 dan kichik bo'lsa: <code>is_night_shift == True</code> yoki <code>min_age >= 18</code> bo'lgan ishlar oqimdan butunlay chiqarib tashlanadi.</li>
+                    <li>Talaba 18+ bo'lsa: Tungi smenali ish tanlanganda xabar berish oynasida TTJ ogohlantirishi chiqadi.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 5. ROADMAP -->
+        <div id="roadmap" class="panel">
+            <div class="roadmap-grid">
+                
+                <div class="stage-card current">
+                    <span class="stage-badge badge-p0">1-BOSQICH (HOZIR - MUSOBAQA UCHUN)</span>
+                    <h4>Ishga tushgan funksiyalar</h4>
+                    <ul>
+                        <li><b>Talaba profili:</b> Hudud, OTM, mutaxassislik, kurs (1-4 va Magistr 1-2), yashash joyi lokatsiyasi.</li>
+                        <li><b>Vakansiya joylash:</b> Lavozim, smena, maosh, talablar, 18+ yosh chegarasi.</li>
+                        <li><b>Moslik:</b> "Oltin Uchburchak" (Vaqt, Masofa, Mutaxassislik) 100-ballik saralash.</li>
+                        <li><b>Yosh himoyasi:</b> 18 yoshgacha tungi ishlar bloklanishi.</li>
+                        <li><b>"Deyarli mos" ishlar:</b> Bo'sh natija o'rniga 70-80% moslikdagi tavsiyalar.</li>
+                        <li><b>"Xabar bering" tugmasi:</b> Yangi ish chiqqanda zudlik bilan push.</li>
+                        <li><b>Pauza & 14 kunlik ariza:</b> Sessiya pauzasi va Mehnat kodeksi 160-modda shabloni.</li>
+                        <li><b>Tungi smena ogohlantirishi:</b> TTJ qoidalari bo'yicha ogohlantirish.</li>
+                        <li><b>Ikki kabinet:</b> Talaba va Ish beruvchi alohida boshqaruv panellari.</li>
+                    </ul>
+                </div>
+
+                <div class="stage-card">
+                    <span class="stage-badge badge-p1">2-BOSQICH (KEYIN / P1)</span>
+                    <h4>Keyingi rejalashtirilgan ishlar</h4>
+                    <ul>
+                        <li><b>"Tekshirilgan ish beruvchi" belgisi (Verified ✔️):</b> Yuridik hujjatlar tekshiruvi.</li>
+                        <li><b>Raqamli shartnoma shabloni:</b> Talaba va ish beruvchi o'rtasida online imzolash.</li>
+                        <li><b>Kengaytirilgan Telegram bildirishnomalari:</b> SMS va push kanallar.</li>
+                        <li><b>Reyting va tavsiyanoma:</b> Smenadan so'ng ikki tomonlama baholash.</li>
+                        <li><b>Zaxira nomzodlar zanjiri:</b> No-show (kelmay qolish) holatida avto-almashtirish.</li>
+                    </ul>
+                </div>
+
+                <div class="stage-card">
+                    <span class="stage-badge badge-p2">3-BOSQICH (ROADMAP / P2)</span>
+                    <h4>Uzoq muddatli ekotizim</h4>
+                    <ul>
+                        <li><b>OTM rektorat kabineti:</b> Talabalar bandligi va amaliyoti monitoringi.</li>
+                        <li><b>Davlat amaliyoti integratsiyasi:</b> Sudlar, shifoxonalar, adliya organlari kvotalari.</li>
+                        <li><b>"Yetib keldim" geolokatsion tasdiq:</b> GPS orqali ish joyiga kelganini tasdiqlash.</li>
+                        <li><b>Smena almashtirish birjasi:</b> Talabalar o'rtasida smenalarni o'zaro almashish.</li>
+                        <li><b>Yagona Milliy Mehnat Tizimi (my.mehnat.uz) bilan integratsiya.</b></li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+
+            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function copyTemplate() {
+            const text = document.getElementById('template-text').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("14 kunlik ariza matni buferga nusxalandi!");
+            });
+        }
+    </script>
+</body>
+</html>
